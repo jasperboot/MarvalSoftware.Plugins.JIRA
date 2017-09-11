@@ -23,7 +23,7 @@
 
             .MarvalSoftware-Jira > .header {
                 position: absolute;
-                top: 10px;
+                top: 20px;
                 left: 10px;
                 right: 10px;
                 line-height: 30px;
@@ -40,7 +40,7 @@
             .MarvalSoftware-Jira > .issues {
                 position: absolute;
                 top: 50px;
-                bottom: 100px;
+                bottom: 110px;
                 left: 10px;
                 right: 10px;
                 overflow: auto;
@@ -116,30 +116,43 @@
                 bottom: 10px;
                 left: 10px;
                 right: 10px;
-                height: 90px;
+                height: 100px;
             }
 
                 .MarvalSoftware-Jira > .newIssue > h1 {
-                    margin-bottom: 10px;
                     line-height: 30px;
+                    bottom: 60px;
+                    position: absolute;
                 }
 
-                .MarvalSoftware-Jira > .newIssue > select {
-                    box-sizing: border-box;
+                .MarvalSoftware-Jira > .newIssue > .issueTypes{
                     position: absolute;
-                    left: 0;
-                    padding: 2px;
-                    height: 22px;
-                    max-width: 100px;
-                    min-width: 100px;
-                    width: 100px;
-                    border: 1px solid #CCC;
+                    bottom: 50px;
                 }
+
+                    .MarvalSoftware-Jira > .newIssue > .issueTypes > .typeLoading {
+                        position: absolute;
+                        background-repeat: no-repeat;
+                        width: 20px;
+                        height: 20px;
+                    }
+
+                        .MarvalSoftware-Jira > .newIssue > .issueTypes > .typeLoading > select {
+                            box-sizing: border-box;
+                            padding: 2px;
+                            height: 22px;
+                            max-width: 110px;
+                            min-width: 110px;
+                            width: 110px;
+                            border: 1px solid #CCC;
+                            position: absolute;
+                        }
 
                 .MarvalSoftware-Jira > .newIssue > .issueSummaryWrapper {
                     position: absolute;
-                    left: 110px;
+                    left: 120px;
                     right: 90px;
+                    bottom: 28px;
                 }
 
                     .MarvalSoftware-Jira > .newIssue > .issueSummaryWrapper > input {
@@ -160,6 +173,7 @@
                     border: 1px solid #CCC;
                     border-radius: 2px;
                     background: #F5F5F5;
+                    bottom: 28px;
                 }
 
                 .MarvalSoftware-Jira > .newIssue > .issueOptions {
@@ -218,15 +232,17 @@
         </div>
         <div class="newIssue">
             <h1>New Issue</h1>
-            <select>
-                <option value="Story">Story</option>
-                <option value="Task">Task</option>
-                <option value="Bug">Bug</option>
-            </select>
-            <div class="issueSummaryWrapper">
-                <input type="text" placeholder="Summary" class="text" maxlength="255" disabled/>
+            <div class="issueTypes">
+                <div class="typeLoading">
+                    <select class="IssueTypeSelect">
+                        <option selected disabled value=""> -- Issue Type -- </option>
+                    </select>
+                </div>
             </div>
-            <button>Create</button>
+            <div class="issueSummaryWrapper">
+                <input type="text" placeholder="Summary" class="text" maxlength="255" />
+            </div>
+            <button disabled>Create</button>
             <div class="issueOptions">
                 <a href="javascript:void(0);" class="selectAttachments"></a>
                 <input type="checkbox" disabled />
@@ -309,6 +325,7 @@
             _summaryElement: null,
             _createElement: null,
             _renderIssuesRequest: null,
+            _typeLoadingElement: null,
             _contactEmail: null,
             _contactUsername: null,
             _contactCheckbox: null,
@@ -391,11 +408,11 @@
                 }
             },
 
-            _createNewIssue: function (issueSummary, issueType) {
+            _createNewIssue: function (issueSummary, issueType, project) {
                 $.ajax({
                     type: "POST",
                     url: this._getPluginPath() + "handler/ApiHandler.ashx?action=CreateJiraIssue&requestNumber=" + this._requestNumber + "&issueSummary=" +
-                    issueSummary + "&issueType=" + issueType + "&reporter=" + (this._contactCheckbox.checked ? this._contactUsername : null),
+                    issueSummary + "&issueType=" + issueType + "&reporter=" + (this._contactCheckbox.checked ? this._contactUsername : null) + "&project=" + project,
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
                     success: function (result) {
@@ -445,7 +462,9 @@
                 this._issuesElement = this._element.querySelector(".issues");
                 this._issuesElement.style.backgroundImage = 'url("' + this._getPluginPath() + '/img/spinner.gif")';
                 eventManager.addHandler(this._issuesElement, "click", this._issuesElement_click, this);
-                this._typeElement = this._element.querySelector("select");
+                this._typeElement = this._element.querySelector(".newIssue > .issueTypes > .typeLoading > select");
+                this._typeLoadingElement = this._element.querySelector(".newIssue > .issueTypes > .typeLoading");
+                this._typeLoadingElement.style.backgroundImage = 'url("' + this._getPluginPath() + '/img/spinner.gif")';
                 this._summaryElement = this._element.querySelector(".issueSummaryWrapper > input");
                 this._createElement = this._element.querySelector("button");
                 this._selectAttachmentElement = this._element.querySelector(".selectAttachments");
@@ -457,19 +476,47 @@
                 eventManager.addHandler(this._selectAttachmentElement, "click", this._showAttachmentsPopup, this);
                 eventManager.addHandler(this._createElement, "click", this._createElement_click, this);
                 eventManager.addHandler(this._summaryElement, "input", this._handleInput, this);
+                eventManager.addHandler(this._typeElement, "change", this._typeElement_change, this);
+                this._typeElement.style.display = 'none';
                 this.appendChild(this._element);
             },
 
-            _handleInput: function() {
-                this._summaryElement.value.length > 0 ? this._createElement.disabled = false : this._createElement.disabled = true;
+            _loadProjectIssueTypes: function () {
+                $.ajax({
+                    type: "GET",
+                    url: this._getPluginPath() + "handler/ApiHandler.ashx?action=GetProjectsIssueTypes",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (result) {
+                        this._typeElement.style.backgroundImage = "";
+                        this._typeElement.style.display = 'block';
+                        var projectKeys = Object.keys(result);
+                        for (var i = 0; i < projectKeys.length; i++) {
+                            var option = document.createElement("option");
+                            var optionGroup = document.createElement("optgroup");
+                            optionGroup.label = projectKeys[i];
+                            this._typeElement.add(optionGroup);
+
+                            for (var j = 0; j < result[projectKeys[i]].length; j++) {
+                                var option = document.createElement("option");
+                                option.text = result[projectKeys[i]][j];
+                                optionGroup.appendChild(option);
+                            }
+                        }
+                    }.bind(this),
+                    error: function (error) {
+                        this._errorPopup();
+                    }.bind(this)
+                });
+            },
+
+            _handleInput: function () {
+                this._summaryElement.value.length > 0 && this._typeElement.selectedIndex > 0 ? this._createElement.disabled = false : this._createElement.disabled = true;
             },
 
             _loadSummaryFromDescription: function () {
                 this._summaryElement.value = this._requestDescription;
-                if (this._summaryElement.value.length > 0) {
-                    this._summaryElement.disabled = false;
-                    this._summaryElement.select();
-                }
+                this._summaryElement.select();
             },
 
             _renderAttachments: function (container) {
@@ -569,13 +616,13 @@
                         bodyElement: this
                     });
                     this._renderElement();
+                    this._loadProjectIssueTypes();
+                    this._loadSummaryFromDescription();
+                    this._renderIssues();
                     if (this._contactEmail != null) {
                         this._contactUsername = this._getContactUsername();
                     }
-                    this._renderIssues();
-                    this._loadSummaryFromDescription();
-                } 
-
+                }
                 if (!this._pluginWindow.isVisible()) {
                     this._pluginWindow.centerToViewport();
                 }
@@ -680,11 +727,15 @@
                 }
             },
 
+            _typeElement_change: function (sender, e) {
+                this._createElement.disabled = !this._summaryElement.value.length > 0;
+            },
+
             _createElement_click: function (sender, e) {
-                this._createNewIssue(this._summaryElement.value, this._typeElement.value);
+                this._createNewIssue(this._summaryElement.value, this._typeElement.value, this._typeElement.options[this._typeElement.selectedIndex].parentNode.label);
                 this._createElement.disabled = true;
                 e.preventDefault();
-            }
+            },
         });
     })();
 </script>

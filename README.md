@@ -49,7 +49,6 @@ Please see your MSM documentation for information on how to install plugins.
 Once the plugin has been installed you will need to configure the following settings within the plugin page:
 
 + *JIRA Base URL* : The URL (including port) of your JIRA instance. `http://jira:8080/`
-+ *JIRA Project* : The name of the project you wish to interact with. `MyProject`
 + *JIRA Custom Field ID* : The ID of the custom field within JIRA that contains the MSM request number. `CT_101_100`
 + *JIRA Custom Field Name* : The name of the custom field within JIRA that contains the MSM request number. `MSM Request Number`
 + *JIRA Username* : The username for authentication with JIRA.

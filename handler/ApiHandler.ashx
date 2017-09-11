@@ -12,20 +12,15 @@ using Newtonsoft.Json.Linq;
 using MarvalSoftware.UI.WebUI.ServiceDesk.RFP.Plugins;
 using MarvalSoftware.ServiceDesk.Facade;
 using MarvalSoftware.DataTransferObjects;
+using System.Threading.Tasks;
+using System.Linq;
+
 /// <summary>
 /// ApiHandler
 /// </summary>
 public class ApiHandler : PluginHandler
 {
     //properties
-    private string ProjectName
-    {
-        get
-        {
-            return GlobalSettings["JIRAProject"];
-        }
-    }
-
     private string CustomFieldName
     {
         get
@@ -96,6 +91,8 @@ public class ApiHandler : PluginHandler
 
     private string JiraType { get; set; }
 
+    private string JiraProject { get; set; }
+
     private string JiraReporter { get; set; }
 
     private string AttachmentIds { get; set; }
@@ -131,6 +128,7 @@ public class ApiHandler : PluginHandler
         JiraIssueNo = httpRequest.Params["issueNumber"] ?? string.Empty;
         JiraSummary = httpRequest.Params["issueSummary"] ?? string.Empty;
         JiraType = httpRequest.Params["issueType"] ?? string.Empty;
+        JiraProject = httpRequest.Params["project"] ?? string.Empty;
         JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
         AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
         MSMContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
@@ -168,6 +166,10 @@ public class ApiHandler : PluginHandler
             case "MoveStatus":
                 MoveMsmStatus(context.Request);
                 break;
+            case "GetProjectsIssueTypes":
+                SortedDictionary<string, string[]> results = GetJIRAProjectIssueTypeMapping();
+                context.Response.Write(JsonConvert.SerializeObject(results));
+                break;
             case "GetJiraUsers":
                 httpWebRequest = BuildRequest(this.BaseUrl + String.Format("user/search?username={0}", this.MSMContactEmail));
                 context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
@@ -184,6 +186,61 @@ public class ApiHandler : PluginHandler
         }
 
 
+    }
+
+    /// <summary>
+    /// Retrieves the issue types for each JIRA project.
+    /// </summary>
+    /// <returns>A sorted dictionary of projects and their issue types.</returns>
+    public SortedDictionary<string, string[]> GetJIRAProjectIssueTypeMapping()
+    {
+        HttpWebRequest httpWebRequest = BuildRequest(this.BaseUrl + String.Format("project"));
+        string response = ProcessRequest(httpWebRequest, this.JiraCredentials);
+        JArray projects = JArray.Parse(response);
+
+        SortedDictionary<string, string[]> projectIssueTypes = new SortedDictionary<string, string[]>();
+        List<Task<string>> issueTypeTasks = new List<Task<string>>();
+
+        foreach (JToken project in projects)
+        {
+            //Start the task
+            Task<string> task = GetProjectIssueTypesAsync(project["key"].ToString());
+            task.ConfigureAwait(false);
+            issueTypeTasks.Add(task);
+        }
+
+        //Wait for all issue types before sorting
+        Task.WaitAll(issueTypeTasks.ToArray());
+
+        foreach (Task<string> task in issueTypeTasks) {
+            var taskResult = JObject.Parse(task.Result);
+            //Filter out subtasks and Epic types and select only the issuetype's name.
+            var issueTypes = taskResult["issueTypes"].Where(type => type["subtask"].ToString().Equals("False") && !(type["name"].ToString().Equals("Epic"))).Select(type => type["name"].ToString()).ToArray();
+
+            Array.Sort(issueTypes, (x, y) => String.Compare(x, y));
+            projectIssueTypes.Add(taskResult["key"].ToString(), issueTypes);
+        }
+
+        return projectIssueTypes;
+    }
+
+    /// <summary>
+    /// Asyncrhonously retrieves the issue types for a given JIRA project key.
+    /// </summary>
+    /// <param name="projectKey"></param>
+    /// <returns>A task which will evantually contain a JSON string.</returns>
+    public async Task<string> GetProjectIssueTypesAsync(string projectKey)
+    {
+        HttpWebRequest request = BuildRequest(this.BaseUrl + String.Format("project/{0}", projectKey));
+        request.Headers.Add("Authorization", "Basic " + this.JiraCredentials);
+
+        using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
+        {
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+                return await reader.ReadToEndAsync();
+            }
+        }
     }
 
     /// <summary>
@@ -263,7 +320,7 @@ public class ApiHandler : PluginHandler
             {
                 project = new
                 {
-                    key = this.ProjectName
+                    key = this.JiraProject
                 },
                 summary = this.JiraSummary,
                 issuetype = new
@@ -405,10 +462,6 @@ public class ApiHandler : PluginHandler
     private JObject PreRequisiteCheck()
     {
         var preReqs = new JObject();
-        if (string.IsNullOrWhiteSpace(this.ProjectName))
-        {
-            preReqs.Add("jiraProject", false);
-        }
         if (string.IsNullOrWhiteSpace(this.CustomFieldName))
         {
             preReqs.Add("jiraCustomFieldName", false);
