@@ -495,7 +495,7 @@
                             var option = document.createElement("option");
                             var optionGroup = document.createElement("optgroup");
                             optionGroup.label = projectKeys[i];
-                            this._typeElement.add(optionGroup);
+                            this._typeElement.appendChild(optionGroup);
 
                             for (var j = 0; j < result[projectKeys[i]].length; j++) {
                                 var option = document.createElement("option");
