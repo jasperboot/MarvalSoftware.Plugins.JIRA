@@ -1,11 +1,11 @@
 
 # JIRA Plugin for MSM
 
-## MSM-JIRA intergration
+## MSM-JIRA integration
 
 This plugin allows you to **Create**, **View**, **Link** and **Unlink** JIRA issues from within MSM. This is achieved by linking the MSM request number to a custom field that has already been configured within JIRA.
 
-## JIRA-MSM intergration 
+## JIRA-MSM integration 
 
 Within JIRA you can set up multiple WebHooks for different transitions. This allows you to move the MSM request status
 during transitions. 
