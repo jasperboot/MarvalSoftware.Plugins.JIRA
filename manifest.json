@@ -20,5 +20,11 @@
     "JIRAUsername",
     "JIRAPassword",
     "MSMAPIKey"
+  ],
+  "QuickSearchTypes": [
+	  {
+		  "Name": "Jira",
+		  "Handler": "handler/SearchHandler.aspx" 
+	  }
   ]
 }
