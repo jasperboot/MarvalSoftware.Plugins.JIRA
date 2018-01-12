@@ -94,7 +94,9 @@ public class ApiHandler : PluginHandler
     /// </summary>
     public override void HandleRequest(HttpContext context)
     {
-        ProcessParamaters(context.Request);       
+        this.ProcessParamaters(context.Request);
+        var httpWebRequest = BuildRequest(this.BaseUrl + String.Format("search?jql=issue={0}", this.SearchText));
+        context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
     }
 
     public override bool IsReusable
@@ -106,9 +108,11 @@ public class ApiHandler : PluginHandler
     /// Get Paramaters from QueryString
     /// </summary>
     private void ProcessParamaters(HttpRequest httpRequest)
-    {       
-        SearchText = httpRequest.Params["searchText"] ?? string.Empty;
-        int.TryParse(httpRequest.Params["issueSummary"] ?? string.Empty, out MaximumNumberOfResults);		 
+    {
+        this.SearchText = httpRequest.Params["searchText"] ?? string.Empty;
+        int maxResults;
+        int.TryParse(httpRequest.Params["issueSummary"] ?? string.Empty, out maxResults);
+        this.MaximumNumberOfResults = maxResults;
     }
 
     /// <summary>
@@ -143,6 +147,8 @@ public class ApiHandler : PluginHandler
     /// <returns>Process Response</returns>
     private static string ProcessRequest(HttpWebRequest request, string credentials)
     {
+        var issueList = new List<object>();
+
         try
         {
             request.Headers.Add("Authorization", "Basic " + credentials);
@@ -150,7 +156,21 @@ public class ApiHandler : PluginHandler
             HttpWebResponse response = request.GetResponse() as HttpWebResponse;
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
-                return reader.ReadToEnd();
+                var searchResponse = JsonHelper.FromJSON(reader.ReadToEnd());
+                var foundIssues = (JArray)searchResponse.issues;
+
+                foreach (dynamic issue in foundIssues)
+                {
+                    issueList.Add(new
+                    {
+                        Url = "",
+                        IconName = "",
+                        Text = "",
+                        PreviewUrl = "",
+                        ExternalPreviewUrl = "",
+                        ExternalIconUrl = ""
+                    });
+                }
             }
         }
         catch (WebException ex)
@@ -158,6 +178,7 @@ public class ApiHandler : PluginHandler
             return ex.Message;
         }
 
+        return JsonHelper.ToJSON(issueList);
     }
 
     /// <summary>
@@ -179,6 +200,11 @@ public class ApiHandler : PluginHandler
         public static string ToJSON(object obj)
         {
             return JsonConvert.SerializeObject(obj);
+        }
+
+        public static dynamic FromJSON(string json)
+        {
+            return JObject.Parse(json);
         }
     }
 }

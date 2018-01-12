@@ -24,7 +24,7 @@
   "QuickSearchTypes": [
 	  {
 		  "Name": "Jira",
-		  "Handler": "handler/SearchHandler.aspx" 
+		  "Handler": "handler/SearchHandler.ashx" 
 	  }
   ]
 }
