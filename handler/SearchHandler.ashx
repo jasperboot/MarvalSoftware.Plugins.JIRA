@@ -41,23 +41,15 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRABaseUrl"] + "rest/api/latest/";
+            return GlobalSettings["JIRABaseUrl"];
         }
     }
 
-    private string MSMBaseUrl
+    private string ApiBaseUrl
     {
         get
         {
-            return HttpContext.Current.Request.Url.Scheme + "://127.0.0.1" + MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath;
-        }
-    }
-
-    private string MSMAPIKey
-    {
-        get
-        {
-            return GlobalSettings["MSMAPIKey"];
+            return this.BaseUrl + "rest/api/latest/";
         }
     }
 
@@ -95,8 +87,8 @@ public class ApiHandler : PluginHandler
     public override void HandleRequest(HttpContext context)
     {
         this.ProcessParamaters(context.Request);
-        var httpWebRequest = BuildRequest(this.BaseUrl + String.Format("search?jql=issue={0}", this.SearchText));
-        context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+        var httpWebRequest = this.BuildRequest(this.ApiBaseUrl + String.Format("search?jql=issue={0}", this.SearchText));
+        context.Response.Write(this.ProcessRequest(httpWebRequest, this.JiraCredentials));
     }
 
     public override bool IsReusable
@@ -122,7 +114,7 @@ public class ApiHandler : PluginHandler
     /// <param name="body">The body for the request</param>
     /// <param name="method">The verb for the request</param>
     /// <returns>The HttpWebRequest ready to be processed</returns>
-    private static HttpWebRequest BuildRequest(string uri = null, string body = null, string method = "GET")
+    private HttpWebRequest BuildRequest(string uri = null, string body = null, string method = "GET")
     {
         var request = WebRequest.Create(new UriBuilder(uri).Uri) as HttpWebRequest;
         request.Method = method.ToUpperInvariant();
@@ -145,7 +137,7 @@ public class ApiHandler : PluginHandler
     /// <param name="request">The HttpWebRequest</param>
     /// <param name="credentials">The Credentails to use for the API</param>
     /// <returns>Process Response</returns>
-    private static string ProcessRequest(HttpWebRequest request, string credentials)
+    private string ProcessRequest(HttpWebRequest request, string credentials)
     {
         var issueList = new List<object>();
 
@@ -163,19 +155,20 @@ public class ApiHandler : PluginHandler
                 {
                     issueList.Add(new
                     {
-                        Url = "",
-                        IconName = "",
-                        Text = "",
-                        PreviewUrl = "",
-                        ExternalPreviewUrl = "",
-                        ExternalIconUrl = ""
+                        Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
+                        Text = string.Format("{0} {1}", issue.key, issue.fields["description"]),
+                        PreviewUrl = Convert.ToString(issue.self),
+                        ExternalIconUrl = string.Format("{0}{1}", this.PluginBaseUrl, "img/jira_16.png")
                     });
                 }
             }
         }
         catch (WebException ex)
         {
-            return ex.Message;
+            using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         return JsonHelper.ToJSON(issueList);
