@@ -156,7 +156,7 @@ public class ApiHandler : PluginHandler
                     issueList.Add(new
                     {
                         Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
-                        Text = string.Format("{0} {1}", issue.key, issue.fields["description"]),
+                        Text = string.Format("{0} {1}", issue.key, issue.fields["summary"]),
                         PreviewUrl = Convert.ToString(issue.self),
                         ExternalIconUrl = string.Format("{0}{1}", this.PluginBaseUrl, "img/jira_16.png")
                     });
