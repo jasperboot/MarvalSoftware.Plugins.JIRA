@@ -157,7 +157,7 @@ public class ApiHandler : PluginHandler
                     {
                         Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
                         Text = string.Format("{0} {1}", issue.key, issue.fields["summary"]),
-                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueDetails={1}", this.PluginBaseUrl, System.Web.HttpUtility.UrlEncode(JsonHelper.ToJSON(issue))),
+                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueDetails={1}", this.PluginBaseUrl, Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonHelper.ToJSON(issue)))),
                         ExternalIconUrl = string.Format("{0}{1}", this.PluginBaseUrl, "img/jira_16.png")
                     });
                 }
