@@ -41,7 +41,15 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRABaseUrl"] + "rest/api/latest/";
+            return GlobalSettings["JIRABaseUrl"];
+        }
+    }
+
+    private string ApiBaseUrl
+    {
+        get
+        {
+            return this.BaseUrl + "rest/api/latest/";
         }
     }
 
@@ -99,10 +107,11 @@ public class ApiHandler : PluginHandler
 
     private string MSMContactEmail { get; set; }
 
+    private string IssueStringDetails { get; set; }
+
     //fields
     private int MsmRequestNo;
-
-
+        
     /// <summary>
     /// Handle Request
     /// </summary>
@@ -132,6 +141,7 @@ public class ApiHandler : PluginHandler
         JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
         AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
         MSMContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
+        IssueStringDetails = httpRequest.Params["issueDetails"] ?? string.Empty;
     }
 
     /// <summary>
@@ -147,12 +157,12 @@ public class ApiHandler : PluginHandler
                 context.Response.Write(PreRequisiteCheck());
                 break;
             case "GetJiraIssues":
-                httpWebRequest = BuildRequest(this.BaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, this.MsmRequestNo));
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, this.MsmRequestNo));
                 context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "LinkJiraIssue":
                 UpdateJiraIssue(this.MsmRequestNo);
-                httpWebRequest = BuildRequest(this.BaseUrl + String.Format("issue/{0}", JiraIssueNo));
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", JiraIssueNo));
                 context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "UnlinkJiraIssue":
@@ -160,7 +170,7 @@ public class ApiHandler : PluginHandler
                 break;
             case "CreateJiraIssue":
                 dynamic result = CreateJiraIssue();
-                httpWebRequest = BuildRequest(this.BaseUrl + String.Format("issue/{0}", result.key));
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", result.key));
                 context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "MoveStatus":
@@ -171,7 +181,7 @@ public class ApiHandler : PluginHandler
                 context.Response.Write(JsonConvert.SerializeObject(results));
                 break;
             case "GetJiraUsers":
-                httpWebRequest = BuildRequest(this.BaseUrl + String.Format("user/search?username={0}", this.MSMContactEmail));
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("user/search?username={0}", this.MSMContactEmail));
                 context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "SendAttachments":
@@ -183,9 +193,43 @@ public class ApiHandler : PluginHandler
                     context.Response.Write(attachmentResult);
                 }
                 break;
+            case "ViewSummary":
+                context.Response.Write(this.BuildPreview());
+                break;
         }
+    }
 
+    /// <summary>
+    /// Build a summary preview of the jira issue to display in MSM
+    /// </summary>
+    /// <returns></returns>
+    private string BuildPreview()
+    {
+        if (string.IsNullOrEmpty(this.IssueStringDetails)) return string.Empty;
 
+        const string jiraIssueSummaryTemplate = @" 
+<html xmlns='http://www.w3.org/1999/xhtml'>
+   <head>
+      <link rel='stylesheet' type='text/css' href='{0}/MasterPages/ServiceDesk.Master.css'/>
+      <link rel='stylesheet' type='text/css' href='{0}/MasterPages/Summary.Master.css'/>
+   </head>
+   <body id='body'>        
+        <div id='container' class='container'>
+            <div id='content' class='content'>
+                <h1 id='heading' title='{2}' style=""background-image: url('{1}')"">
+                    <a href='{3}' target='_blank'>{2}</a>
+                </h1>
+            </div>
+        </div>
+    </body>
+</html>";
+        
+        var issue = JsonHelper.FromJSON(System.Web.HttpUtility.UrlDecode(this.IssueStringDetails));
+        var styleSheetUrl = string.Format("{0}/RFP/Assets/Skins/{1}", this.MSMBaseUrl, MarvalSoftware.UI.WebUI.Style.StyleSheetManager.Skin);
+        var iconUrl = string.Format("{0}img/jira_32.png", this.PluginBaseUrl);
+        var issueUrl = this.BaseUrl + string.Format("browse/{0}", issue.key);
+        var issueKeyAndSummary = string.Format("{0} {1}", issue.key, issue.fields["summary"]);
+        return string.Format(jiraIssueSummaryTemplate, styleSheetUrl, iconUrl, issueKeyAndSummary, issueUrl);
     }
 
     /// <summary>
@@ -194,7 +238,7 @@ public class ApiHandler : PluginHandler
     /// <returns>A sorted dictionary of projects and their issue types.</returns>
     public SortedDictionary<string, string[]> GetJIRAProjectIssueTypeMapping()
     {
-        HttpWebRequest httpWebRequest = BuildRequest(this.BaseUrl + String.Format("project"));
+        HttpWebRequest httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("project"));
         string response = ProcessRequest(httpWebRequest, this.JiraCredentials);
         JArray projects = JArray.Parse(response);
 
@@ -231,7 +275,7 @@ public class ApiHandler : PluginHandler
     /// <returns>A task which will evantually contain a JSON string.</returns>
     public async Task<string> GetProjectIssueTypesAsync(string projectKey)
     {
-        HttpWebRequest request = BuildRequest(this.BaseUrl + String.Format("project/{0}", projectKey));
+        HttpWebRequest request = BuildRequest(this.ApiBaseUrl + String.Format("project/{0}", projectKey));
         request.Headers.Add("Authorization", "Basic " + this.JiraCredentials);
 
         using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
@@ -286,7 +330,7 @@ public class ApiHandler : PluginHandler
         content.Seek(0, SeekOrigin.Begin);
 
         HttpWebResponse response = null;
-        HttpWebRequest request = WebRequest.Create(new UriBuilder(this.BaseUrl + "issue/" + issueKey + "/attachments").Uri) as HttpWebRequest;
+        HttpWebRequest request = WebRequest.Create(new UriBuilder(this.ApiBaseUrl + "issue/" + issueKey + "/attachments").Uri) as HttpWebRequest;
         request.Method = "POST";
         request.ContentType = string.Format("multipart/form-data; boundary={0}", boundary);
         request.Headers.Add("Authorization", "Basic " + this.JiraCredentials);
@@ -337,7 +381,7 @@ public class ApiHandler : PluginHandler
             jobject.fields["reporter"] = reporter;
         }
 
-        var httpWebRequest = BuildRequest(this.BaseUrl + "issue/", jobject.ToString(), "POST");
+        var httpWebRequest = BuildRequest(this.ApiBaseUrl + "issue/", jobject.ToString(), "POST");
         return JObject.Parse(ProcessRequest(httpWebRequest, this.JiraCredentials));
     }
 
@@ -353,7 +397,7 @@ public class ApiHandler : PluginHandler
         result.Add(this.CustomFieldId, value);
         body.Add("fields", result);
 
-        var httpWebRequest = BuildRequest(this.BaseUrl + String.Format("issue/{0}", JiraIssueNo), JsonHelper.ToJSON(body), "PUT");
+        var httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", JiraIssueNo), JsonHelper.ToJSON(body), "PUT");
         return ProcessRequest(httpWebRequest, this.JiraCredentials);
     }
 
@@ -437,7 +481,7 @@ public class ApiHandler : PluginHandler
 
         if (requestNumber > 0 && httpRequest.QueryString["status"] != null)
         {
-            var httpWebRequest = BuildRequest(this.BaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, requestNumber));
+            var httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, requestNumber));
             dynamic d = JObject.Parse(ProcessRequest(httpWebRequest, this.JiraCredentials));
             foreach (var issue in d.issues)
             {
@@ -470,7 +514,7 @@ public class ApiHandler : PluginHandler
         {
             preReqs.Add("jiraCustomFieldID", false);
         }
-        if (string.IsNullOrWhiteSpace(this.BaseUrl))
+        if (string.IsNullOrWhiteSpace(this.ApiBaseUrl))
         {
             preReqs.Add("jiraBaseUrl", false);
         }
@@ -556,6 +600,11 @@ public class ApiHandler : PluginHandler
         public static string ToJSON(object obj)
         {
             return JsonConvert.SerializeObject(obj);
+        }
+
+        public static dynamic FromJSON(string json)
+        {
+            return JObject.Parse(json);
         }
     }
 }

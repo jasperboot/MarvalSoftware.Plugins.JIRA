@@ -101,9 +101,9 @@ public class ApiHandler : PluginHandler
     /// </summary>
     private void ProcessParamaters(HttpRequest httpRequest)
     {
-        this.SearchText = httpRequest.Params["searchText"] ?? string.Empty;
+        this.SearchText = System.Web.HttpUtility.UrlDecode(httpRequest.Params["searchText"]) ?? string.Empty;
         int maxResults;
-        int.TryParse(httpRequest.Params["issueSummary"] ?? string.Empty, out maxResults);
+        int.TryParse(httpRequest.Params["maxResults"] ?? string.Empty, out maxResults);
         this.MaximumNumberOfResults = maxResults;
     }
 
@@ -157,7 +157,7 @@ public class ApiHandler : PluginHandler
                     {
                         Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
                         Text = string.Format("{0} {1}", issue.key, issue.fields["summary"]),
-                        PreviewUrl = Convert.ToString(issue.self),
+                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueDetails={1}", this.PluginBaseUrl, System.Web.HttpUtility.UrlEncode(JsonHelper.ToJSON(issue))),
                         ExternalIconUrl = string.Format("{0}{1}", this.PluginBaseUrl, "img/jira_16.png")
                     });
                 }
