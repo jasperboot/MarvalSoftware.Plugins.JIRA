@@ -214,34 +214,154 @@ public class ApiHandler : PluginHandler
 
         const string jiraIssueSummaryTemplate = @" 
 <html xmlns='http://www.w3.org/1999/xhtml'>
-   <head>
-      <link rel='stylesheet' type='text/css' href='{0}/MasterPages/ServiceDesk.Master.css'/>
-      <link rel='stylesheet' type='text/css' href='{0}/MasterPages/Summary.Master.css'/>
+   <head>      
       <style>
-          .jiraIssueHeader
-          {{
-            padding-left: 42px;
-            background: no-repeat 0 center;
-            background-image: url('{1}');
-          }}
-          .jiraIssueHeader > h1
-          {{
-            margin: 0;
-            padding: 0;
-            padding-top: 5px;
-          }}          
+            html
+            {{
+                font-family: Arial;
+                font-size: 12px;
+            }}
+            #container
+            {{
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 20px;
+                overflow: auto;
+            }}
+            @media print
+            {{
+                #container
+                {{
+                    overflow: visible;
+                }}
+            }}
+            .jiraIssueHeader
+            {{            
+                padding-left: 42px;
+                background: no-repeat 0 center;
+                background-image: url('{0}');
+                vertical-align: middle;
+                margin-bottom: 20px;
+            }}
+            h1
+            {{
+                line-height: 20px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 20px;
+                margin: 0;
+                padding: 0;
+                padding-top: 5px;
+            }}          
+            h2 a
+            {{
+                text-decoration: none;
+            }}
+            h2 .notLink:hover
+            {{
+                color: #000;
+                cursor: text;
+            }}
+            .panel
+            {{
+                clear: both;
+            }}
+            .panel > h2
+            {{          
+                margin-bottom: 10px;
+                border-bottom: 2px solid #d5d5d5;
+                font-size: 16px;
+            }}
+            .panel
+            {{
+                margin-top: 10px;
+            }}
+            .panel:first-child
+            {{
+                margin-top: 0;
+            }}
+            .panel .multiColumn
+            {{
+                -moz-column-count: 2;
+                -webkit-column-count: 2;
+                column-count: 2;
+                -webkit-column-width: 250px;
+                -moz-column-width: 250px;
+                column-width: 250px;
+            }}
+            .panel .keyValueSpan
+            {{
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }}
+            .panel .keyValueSpan + .keyValueSpan,
+            .panel .keyValueSpan + .multiColumn,
+            .panel .multiColumn + .keyValueSpan,
+            .panel .keyValueSpan + .grid,
+            .panel .keyValueDiv + .keyValueDiv,
+            .panel .keyValueDiv + .multiColumn,
+            .panel .multiColumn + .keyValueDiv,
+            .panel .keyValueDiv + .grid
+            {{
+                margin-top: 10px;
+            }}
+            .panel .keyValueSpan,
+            .panel .keyValueSpan > *
+            {{
+                vertical-align: middle;
+            }}
+            .panel .keyValueSpan > label,
+            .panel .keyValueDiv > label
+            {{
+                display: inline-block;
+                width: 100px;
+                text-align: center;
+                margin-right: 10px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }}
+            .panel .keyValueDiv > div
+            {{
+                margin-left: 110px;
+                margin-top: -1em;
+            }}
+            .panel .keyValueSpan > span,
+            .panel .keyValueSpan > a,
+            .panel .keyValueDiv > div
+            {{
+                font-weight: bold;
+            }}
+            .panel .keyValueSpan .jiraType
+            {{
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url('{5}');
+            }}
       </style>
    </head>   
    <body id='body'>        
         <div id='container' class='container'>
             <div id='content' class='content'>
                 <div class='jiraIssueHeader'>
-                    <a href='{2}' target='_blank'>{3}</a>
-                    <h1 id='heading' title=""{4}"">{4}</h1>
+                    <a href='{1}' target='_blank'>{2}</a>
+                    <h1 id='heading' title=""{3}"">{3}</h1>
                 </div>
                 <div class='jiraSummary'>
                     <div id='details' class='panel'>
-                    
+                        <h2>Details</h2>
+                        <div class='multiColumn'>
+                            <span class='keyValueSpan'>
+                                <label>Type</label>
+                                <span class='jiraType'>{4}</span>
+                            </span>
+                        </div>
                     </div>
                      <div id='People' class='panel'>
                     
@@ -253,14 +373,14 @@ public class ApiHandler : PluginHandler
 </html>";
         
         var issue = JsonHelper.FromJSON(this.IssueStringDetails);
-        var styleSheetUrl = string.Format("{0}/RFP/Assets/Skins/{1}", this.MSMBaseUrl, MarvalSoftware.UI.WebUI.Style.StyleSheetManager.Skin);
         var issueType = issue.fields["issuetype"];
         var project = issue.fields["project"];
         var iconUrl = project.avatarUrls["32x32"];
         var issueUrl = this.BaseUrl + string.Format("browse/{0}", issue.key);
         var summary = System.Web.HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"]));
         var issueProjectAndKey = string.Format("{0} / {1}", project.name, issue.key);
-        return string.Format(jiraIssueSummaryTemplate, styleSheetUrl, iconUrl, issueUrl, issueProjectAndKey, summary);
+
+        return string.Format(jiraIssueSummaryTemplate, iconUrl, issueUrl, issueProjectAndKey, summary, issueType.name, issueType.iconUrl);
     }
 
     /// <summary>
