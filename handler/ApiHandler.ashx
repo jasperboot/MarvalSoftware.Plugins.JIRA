@@ -212,17 +212,17 @@ public class ApiHandler : PluginHandler
     {
         if (string.IsNullOrEmpty(this.IssueStringDetails)) return string.Empty;
 
-        const string jiraIssueSummaryTemplate = @" 
-<html xmlns='http://www.w3.org/1999/xhtml'>
+        const string jiraIssueSummaryTemplate = 
+@"<html xmlns='http://www.w3.org/1999/xhtml'>
    <head>      
       <style>
             html
-            {{
+            {
                 font-family: Arial;
                 font-size: 12px;
-            }}
+            }
             #container
-            {{
+            {
                 position: absolute;
                 top: 0;
                 bottom: 0;
@@ -230,24 +230,24 @@ public class ApiHandler : PluginHandler
                 right: 0;
                 padding: 20px;
                 overflow: auto;
-            }}
-            @media print
-            {{
+            }
+            @@media print
+            {
                 #container
-                {{
+                {
                     overflow: visible;
-                }}
-            }}
+                }
+            }
             .jiraIssueHeader
-            {{            
+            {            
                 padding-left: 42px;
                 background: no-repeat 0 center;
-                background-image: url('{0}');
+                background-image: url('@Model[""projectIconUrl""]');
                 vertical-align: middle;
                 margin-bottom: 20px;
-            }}
+            }
             h1
-            {{
+            {
                 line-height: 20px;
                 white-space: nowrap;
                 overflow: hidden;
@@ -256,50 +256,50 @@ public class ApiHandler : PluginHandler
                 margin: 0;
                 padding: 0;
                 padding-top: 5px;
-            }}          
+            }          
             h2 a
-            {{
+            {
                 text-decoration: none;
-            }}
+            }
             h2 .notLink:hover
-            {{
+            {
                 color: #000;
                 cursor: text;
-            }}
+            }
             .panel
-            {{
+            {
                 clear: both;
-            }}
+            }
             .panel > h2
-            {{          
+            {          
                 margin-bottom: 10px;
                 border-bottom: 2px solid #d5d5d5;
                 font-size: 16px;
-            }}
+            }
             .panel
-            {{
+            {
                 margin-top: 10px;
-            }}
+            }
             .panel:first-child
-            {{
+            {
                 margin-top: 0;
-            }}
+            }
             .panel .multiColumn
-            {{
+            {
                 -moz-column-count: 2;
                 -webkit-column-count: 2;
                 column-count: 2;
                 -webkit-column-width: 250px;
                 -moz-column-width: 250px;
                 column-width: 250px;
-            }}
+            }
             .panel .keyValueSpan
-            {{
+            {
                 display: block;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-            }}
+            }
             .panel .keyValueSpan + .keyValueSpan,
             .panel .keyValueSpan + .multiColumn,
             .panel .multiColumn + .keyValueSpan,
@@ -308,17 +308,17 @@ public class ApiHandler : PluginHandler
             .panel .keyValueDiv + .multiColumn,
             .panel .multiColumn + .keyValueDiv,
             .panel .keyValueDiv + .grid
-            {{
+            {
                 margin-top: 10px;
-            }}
+            }
             .panel .keyValueSpan,
             .panel .keyValueSpan > *
-            {{
+            {
                 vertical-align: middle;
-            }}
+            }
             .panel .keyValueSpan > label,
             .panel .keyValueDiv > label
-            {{
+            {
                 display: inline-block;
                 width: 100px;
                 text-align: center;
@@ -326,32 +326,44 @@ public class ApiHandler : PluginHandler
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-            }}
+            }
             .panel .keyValueDiv > div
-            {{
+            {
                 margin-left: 110px;
                 margin-top: -1em;
-            }}
+            }
             .panel .keyValueSpan > span,
             .panel .keyValueSpan > a,
             .panel .keyValueDiv > div
-            {{
+            {
                 font-weight: bold;
-            }}
+            }
             .panel .keyValueSpan .jiraType
-            {{
+            {
                 padding-left: 18px;
                 background: no-repeat 0 center;
-                background-image: url('{5}');
-            }}
+                background-image: url('@Model[""issueTypeIconUrl""]');
+            }
+            .panel .keyValueSpan .jiraStatus
+            {
+                background-color: @Model[""statusCategoryBackgroundColor""];
+                border-color: @Model[""statusCategoryBackgroundColor""];
+                padding: 2px;
+            }
+            .panel .keyValueSpan .jiraPriority
+            {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url('@Model[""priorityIconUrl""]');
+            }
       </style>
    </head>   
    <body id='body'>        
         <div id='container' class='container'>
             <div id='content' class='content'>
                 <div class='jiraIssueHeader'>
-                    <a href='{1}' target='_blank'>{2}</a>
-                    <h1 id='heading' title=""{3}"">{3}</h1>
+                    <a href='@Model[""issueUrl""]' target='_blank'>@Model[""issueProjectAndKey""]</a>
+                    <h1 id='heading' title=""@Model[""summary""]"">@Model[""summary""]</h1>
                 </div>
                 <div class='jiraSummary'>
                     <div id='details' class='panel'>
@@ -359,7 +371,15 @@ public class ApiHandler : PluginHandler
                         <div class='multiColumn'>
                             <span class='keyValueSpan'>
                                 <label>Type</label>
-                                <span class='jiraType'>{4}</span>
+                                <span class='jiraType'>@Model[""issueTypeName""]</span>
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Status</label>
+                                <span class='jiraStatus'>@Model[""statusName""]</span>
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Priority</label>
+                                <span class='jiraPriority'>@Model[""priorityName""]</span>
                             </span>
                         </div>
                     </div>
@@ -372,15 +392,36 @@ public class ApiHandler : PluginHandler
     </body>
 </html>";
         
+        string razorTemplate;
+        bool isError;
+        var issueDetails = new Dictionary<string, string>();
         var issue = JsonHelper.FromJSON(this.IssueStringDetails);
+        
         var issueType = issue.fields["issuetype"];
+        issueDetails.Add("issueTypeIconUrl", Convert.ToString(issueType.iconUrl));
+        issueDetails.Add("issueTypeName", Convert.ToString(issueType.name));
+        
         var project = issue.fields["project"];
-        var iconUrl = project.avatarUrls["32x32"];
-        var issueUrl = this.BaseUrl + string.Format("browse/{0}", issue.key);
-        var summary = System.Web.HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"]));
-        var issueProjectAndKey = string.Format("{0} / {1}", project.name, issue.key);
+        issueDetails.Add("projectIconUrl", Convert.ToString(project.avatarUrls["32x32"]));
+        issueDetails.Add("issueUrl", this.BaseUrl + string.Format("browse/{0}", issue.key));
+        issueDetails.Add("summary", System.Web.HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"])));
+        issueDetails.Add("issueProjectAndKey", string.Format("{0} / {1}", project.name, issue.key));
+            
+        var status = issue.fields["status"];
+        var statusCategory = status.statusCategory;
+        issueDetails.Add("statusName", Convert.ToString(status.name));
+        issueDetails.Add("statusCategoryBackgroundColor", Convert.ToString(statusCategory.colorName));
 
-        return string.Format(jiraIssueSummaryTemplate, iconUrl, issueUrl, issueProjectAndKey, summary, issueType.name, issueType.iconUrl);
+        var priority = issue.fields["priority"];
+        issueDetails.Add("priorityName", Convert.ToString(priority.name));
+        issueDetails.Add("priorityIconUrl", Convert.ToString(priority.iconUrl));
+
+        using (var razor = new MarvalSoftware.RazorHelper())
+        {
+            razorTemplate = razor.Render(jiraIssueSummaryTemplate, issueDetails, out isError);
+        }
+
+        return razorTemplate;
     }
 
     /// <summary>
