@@ -153,22 +153,30 @@ public class ApiHandler : PluginHandler
 
                 foreach (dynamic issue in foundIssues)
                 {
+                    var issueType = issue.fields["issuetype"];
+                    var issueSummary = issue.fields["summary"];
+
                     issueList.Add(new
                     {
                         Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
-                        Text = string.Format("{0} {1}", issue.key, issue.fields["summary"]),
-                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueDetails={1}", this.PluginBaseUrl, Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonHelper.ToJSON(issue)))),
-                        ExternalIconUrl = string.Format("{0}{1}", this.PluginBaseUrl, "img/jira_16.png")
+                        Text = string.Format("{0} {1}", issue.key, issueSummary),
+                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueDetails={1}", this.PluginBaseUrl, HttpUtility.UrlEncode(Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonHelper.ToJSON(issue))))),
+                        ExternalIconUrl = Convert.ToString(issueType.iconUrl)
                     });
                 }
             }
         }
         catch (WebException ex)
         {
-            using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+            if (ex.Response != null)
             {
-                return reader.ReadToEnd();
+                using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+                {
+                    return reader.ReadToEnd();
+                }
             }
+
+            return ex.Message;
         }
 
         return JsonHelper.ToJSON(issueList);

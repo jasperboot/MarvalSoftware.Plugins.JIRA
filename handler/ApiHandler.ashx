@@ -217,15 +217,33 @@ public class ApiHandler : PluginHandler
    <head>
       <link rel='stylesheet' type='text/css' href='{0}/MasterPages/ServiceDesk.Master.css'/>
       <link rel='stylesheet' type='text/css' href='{0}/MasterPages/Summary.Master.css'/>
-   </head>
+      <style>
+          .jiraIssueHeader
+          {{
+            padding-left: 42px;
+            background: no-repeat 0 center;
+            background-image: url('{1}');
+          }}
+          .jiraIssueHeader > h1
+          {{
+            margin: 0;
+            padding: 0;
+            padding-top: 5px;
+          }}          
+      </style>
+   </head>   
    <body id='body'>        
         <div id='container' class='container'>
             <div id='content' class='content'>
-                <h1 id='heading' title=""{2}"" style=""background-image: url('{1}')"">
-                    <a href='{3}' target='_blank'>{2}</a>
-                </h1>
+                <div class='jiraIssueHeader'>
+                    <a href='{2}' target='_blank'>{3}</a>
+                    <h1 id='heading' title=""{4}"">{4}</h1>
+                </div>
                 <div class='jiraSummary'>
                     <div id='details' class='panel'>
+                    
+                    </div>
+                     <div id='People' class='panel'>
                     
                     </div>
                 </div>
@@ -237,11 +255,12 @@ public class ApiHandler : PluginHandler
         var issue = JsonHelper.FromJSON(this.IssueStringDetails);
         var styleSheetUrl = string.Format("{0}/RFP/Assets/Skins/{1}", this.MSMBaseUrl, MarvalSoftware.UI.WebUI.Style.StyleSheetManager.Skin);
         var issueType = issue.fields["issuetype"];
-        var iconUrl = issueType.iconUrl;
+        var project = issue.fields["project"];
+        var iconUrl = project.avatarUrls["32x32"];
         var issueUrl = this.BaseUrl + string.Format("browse/{0}", issue.key);
         var summary = System.Web.HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"]));
-        var issueKeyAndSummary = string.Format("{0} {1}", issue.key, summary);
-        return string.Format(jiraIssueSummaryTemplate, styleSheetUrl, iconUrl, issueKeyAndSummary, issueUrl);
+        var issueProjectAndKey = string.Format("{0} / {1}", project.name, issue.key);
+        return string.Format(jiraIssueSummaryTemplate, styleSheetUrl, iconUrl, issueUrl, issueProjectAndKey, summary);
     }
 
     /// <summary>
