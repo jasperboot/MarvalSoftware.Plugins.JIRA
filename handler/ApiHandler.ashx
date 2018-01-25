@@ -9,6 +9,7 @@ using System.Dynamic;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using MarvalSoftware;
 using MarvalSoftware.UI.WebUI.ServiceDesk.RFP.Plugins;
 using MarvalSoftware.ServiceDesk.Facade;
 using MarvalSoftware.DataTransferObjects;
@@ -111,6 +112,11 @@ public class ApiHandler : PluginHandler
 
     //fields
     private int MsmRequestNo;
+    private static readonly int second = 1;
+    private static readonly int minute = 60 * second;
+    private static readonly int hour = 60 * minute;
+    private static readonly int day = 24 * hour;
+    private static readonly int month = 30 * day;
         
     /// <summary>
     /// Handle Request
@@ -446,6 +452,21 @@ public class ApiHandler : PluginHandler
                             </span>
                         </div>
                     </div>
+                 <div id='Dates' class='panel'>
+                        <h2>Dates</h2>
+                        <span class='keyValueSpan'>
+                              <label>Created</label>
+                              <span>@Model[""created""]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                              <label>Updated</label>
+                              <span>@Model[""updated""]</span>
+                        </span>
+                 </div>
+                  <div id='Description' class='panel'>
+                        <h2>Description</h2>
+                        <span>@Model[""description""]</span>
+                  </div>
                 </div>
             </div>
         </div>
@@ -497,7 +518,25 @@ public class ApiHandler : PluginHandler
         var reporter = issue.fields["reporter"];
         issueDetails.Add("reporterName", reporter != null ? Convert.ToString(reporter.displayName) : string.Empty);
         issueDetails.Add("reporterIconUrl", reporter != null ? Convert.ToString(reporter.avatarUrls["16x16"]) : string.Empty);
+
+        DateTime createdDate;
+        issueDetails.Add("created", string.Empty);
+        if(DateTime.TryParse(Convert.ToString(issue.fields["created"]), out createdDate))
+        {
+            issueDetails["created"] = GetRelativeTime(createdDate);
+        }
+
+        DateTime updatedDate;
+        issueDetails.Add("updated", string.Empty);
+        if(DateTime.TryParse(Convert.ToString(issue.fields["updated"]), out updatedDate))
+        {
+            issueDetails["updated"] = GetRelativeTime(updatedDate);
+        }
+
+        issueDetails.Add("description", HttpUtility.HtmlEncode(Convert.ToString(issue.fields["description"])));
+        issueDetails.Add("msmLink", string.Format("{0}/RFP/Forms/Request?id={1}", this.MSMBaseUrl, Convert.ToString(issue.fields[this.CustomFieldId])));
         
+
         bool isError;
         string razorTemplate = string.Empty;
         using (var razor = new MarvalSoftware.RazorHelper())
@@ -882,5 +921,49 @@ public class ApiHandler : PluginHandler
         {
             return JObject.Parse(json);
         }
+    }
+
+    private static string GetRelativeTime(DateTime date)
+    {
+        var localDateTime = TimezoneHelper.ToLocalTime(date);
+        var ts = new TimeSpan(DateTime.UtcNow.Ticks - date.Ticks);
+        double delta = Math.Abs(ts.TotalSeconds);
+        var localTimeOfDay = localDateTime.ToShortTimeString();
+        if (delta < 1 * minute)
+        {
+            return ts.Seconds == 1 ? "1 second ago" : "A few seconds ago";
+        }
+
+        if (delta < 2 * minute)
+        {
+            return "1 minute ago";
+        }
+
+        if (delta < 45 * minute)
+        {
+            return string.Format("{0} minutes ago", ts.Minutes);
+        }
+
+        if (delta < 90 * minute)
+        {
+            return "1 hour ago";
+        }
+
+        if (delta < 24 * hour)
+        {
+            return string.Format("{0} hours ago", ts.Hours);
+        }
+
+        if (delta < 48 * hour)
+        {
+            return string.Format("Yesterday {0}", localTimeOfDay);
+        }
+
+        if (delta < 7 * day)
+        {
+            return string.Format("{0} {1}", localDateTime.DayOfWeek, localTimeOfDay);
+        }
+
+        return localDateTime.ToString();
     }
 }

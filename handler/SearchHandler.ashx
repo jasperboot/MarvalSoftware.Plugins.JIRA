@@ -18,7 +18,7 @@ using System.Linq;
 /// <summary>
 /// ApiHandler
 /// </summary>
-public class ApiHandler : PluginHandler
+public class SearchHandler : PluginHandler
 {
     //properties
     private string CustomFieldName
