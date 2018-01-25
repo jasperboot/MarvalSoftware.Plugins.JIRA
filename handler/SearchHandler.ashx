@@ -160,7 +160,7 @@ public class ApiHandler : PluginHandler
                     {
                         Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
                         Text = string.Format("{0} {1}", issue.key, issueSummary),
-                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueDetails={1}", this.PluginBaseUrl, HttpUtility.UrlEncode(Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonHelper.ToJSON(issue))))),
+                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueUrl={1}", this.PluginBaseUrl, System.Web.HttpUtility.UrlEncode(Convert.ToString(issue.self))),
                         ExternalIconUrl = Convert.ToString(issueType.iconUrl)
                     });
                 }

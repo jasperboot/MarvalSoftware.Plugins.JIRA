@@ -107,7 +107,7 @@ public class ApiHandler : PluginHandler
 
     private string MSMContactEmail { get; set; }
 
-    private string IssueStringDetails { get; set; }
+    private string IssueUrl { get; set; }
 
     //fields
     private int MsmRequestNo;
@@ -141,12 +141,7 @@ public class ApiHandler : PluginHandler
         JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
         AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
         MSMContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
-        
-        IssueStringDetails = httpRequest.Params["issueDetails"] ?? string.Empty;
-        if (!string.IsNullOrEmpty(IssueStringDetails))
-        {
-            IssueStringDetails = Encoding.UTF8.GetString(Convert.FromBase64String(IssueStringDetails));
-        }
+        this.IssueUrl = httpRequest.Params["issueUrl"] ?? string.Empty;
     }
 
     /// <summary>
@@ -199,7 +194,8 @@ public class ApiHandler : PluginHandler
                 }
                 break;
             case "ViewSummary":
-                context.Response.Write(this.BuildPreview());
+                httpWebRequest = BuildRequest(this.IssueUrl);
+                context.Response.Write(this.BuildPreview(ProcessRequest(httpWebRequest, this.JiraCredentials)));
                 break;
         }
     }
@@ -208,12 +204,12 @@ public class ApiHandler : PluginHandler
     /// Build a summary preview of the jira issue to display in MSM
     /// </summary>
     /// <returns></returns>
-    private string BuildPreview()
+    private string BuildPreview(string issueString)
     {
-        if (string.IsNullOrEmpty(this.IssueStringDetails)) return string.Empty;
+        if (string.IsNullOrEmpty(issueString)) return string.Empty;
 
-        const string jiraIssueSummaryTemplate = 
-@"<html xmlns='http://www.w3.org/1999/xhtml'>
+        const string jiraIssueSummaryTemplate =
+            @"<html xmlns='http://www.w3.org/1999/xhtml'>
    <head>      
       <style>
             html
@@ -381,6 +377,10 @@ public class ApiHandler : PluginHandler
                                 <label>Priority</label>
                                 <span class='jiraPriority'>@Model[""priorityName""]</span>
                             </span>
+                            <span class='keyValueSpan'>
+                                <label>Resolution</label>
+                                <span>@Model[""resolution""]</span>
+                            </span>
                         </div>
                     </div>
                      <div id='People' class='panel'>
@@ -391,22 +391,20 @@ public class ApiHandler : PluginHandler
         </div>
     </body>
 </html>";
-        
-        string razorTemplate;
-        bool isError;
+
+        var issue = JsonHelper.FromJSON(issueString);
         var issueDetails = new Dictionary<string, string>();
-        var issue = JsonHelper.FromJSON(this.IssueStringDetails);
-        
+
         var issueType = issue.fields["issuetype"];
         issueDetails.Add("issueTypeIconUrl", Convert.ToString(issueType.iconUrl));
         issueDetails.Add("issueTypeName", Convert.ToString(issueType.name));
-        
+
         var project = issue.fields["project"];
         issueDetails.Add("projectIconUrl", Convert.ToString(project.avatarUrls["32x32"]));
         issueDetails.Add("issueUrl", this.BaseUrl + string.Format("browse/{0}", issue.key));
         issueDetails.Add("summary", System.Web.HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"])));
         issueDetails.Add("issueProjectAndKey", string.Format("{0} / {1}", project.name, issue.key));
-            
+
         var status = issue.fields["status"];
         var statusCategory = status.statusCategory;
         issueDetails.Add("statusName", Convert.ToString(status.name));
@@ -416,6 +414,12 @@ public class ApiHandler : PluginHandler
         issueDetails.Add("priorityName", Convert.ToString(priority.name));
         issueDetails.Add("priorityIconUrl", Convert.ToString(priority.iconUrl));
 
+        var resolution = issue.fields["resolution"];
+        issueDetails.Add("resolution", resolution != null ? Convert.ToString(resolution.name) : "Unresolved");
+        
+        
+        bool isError;
+        string razorTemplate = string.Empty;
         using (var razor = new MarvalSoftware.RazorHelper())
         {
             razorTemplate = razor.Render(jiraIssueSummaryTemplate, issueDetails, out isError);
