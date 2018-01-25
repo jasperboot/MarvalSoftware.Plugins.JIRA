@@ -352,6 +352,18 @@ public class ApiHandler : PluginHandler
                 background: no-repeat 0 center;
                 background-image: url('@Model[""priorityIconUrl""]');
             }
+            .panel .keyValueSpan .jiraAssignee
+            {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url('@Model[""assigneeIconUrl""]');
+            }            
+            .panel .keyValueSpan .jiraReporter
+            {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url('@Model[""reporterIconUrl""]');
+            }
       </style>
    </head>   
    <body id='body'>        
@@ -381,10 +393,58 @@ public class ApiHandler : PluginHandler
                                 <label>Resolution</label>
                                 <span>@Model[""resolution""]</span>
                             </span>
+                            <span class='keyValueSpan'>
+                                <label>Affects Version/s</label>
+                                <span>@Model[""affectsVersions""]</span>
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Fix Version/s</label>
+                                <span>@Model[""fixVersions""]</span>
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Component/s</label>
+                                <span>@Model[""components""]</span>
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Label/s</label>
+                                <span>@Model[""labels""]</span>
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Story Points</label>
+                                <span>@Model[""storyPoints""]</span>
+                            </span>
                         </div>
                     </div>
                      <div id='People' class='panel'>
-                    
+                        <h2>People</h2>
+                        <div class='multiColumn'>
+                            <span class='keyValueSpan'>
+                                <label>Assignee</label>
+                                @if(!string.IsNullOrEmpty(Model[""assigneeName""]))
+                                {
+                                <span class='jiraAssignee'>
+                                    @Model[""assigneeName""]
+                                </span>
+                                }
+                                else
+                                {
+                                <span>@Model[""assigneeName""]</span>
+                                }
+                            </span>
+                            <span class='keyValueSpan'>
+                                <label>Reporter</label>
+                                @if(!string.IsNullOrEmpty(Model[""reporterName""]))
+                                {
+                                <span class='jiraReporter'>
+                                    @Model[""reporterName""]
+                                </span>
+                                }
+                                else
+                                {
+                                <span>@Model[""reporterName""]</span>
+                                }
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -416,7 +476,27 @@ public class ApiHandler : PluginHandler
 
         var resolution = issue.fields["resolution"];
         issueDetails.Add("resolution", resolution != null ? Convert.ToString(resolution.name) : "Unresolved");
+
+        var affectedVersions = (JArray)issue.fields["versions"];
+        issueDetails.Add("affectsVersions", affectedVersions.Count() > 0 ? string.Join(",", affectedVersions.Select(av => ((dynamic)av).name)) : "None");
+
+        var fixVersions = (JArray)issue.fields["fixVersions"];
+        issueDetails.Add("fixVersions", fixVersions.Count() > 0 ? string.Join(",", fixVersions.Select(fv => ((dynamic)fv).name)) : "None");
         
+        var components = (JArray)issue.fields["components"];
+        issueDetails.Add("components", components.Count() > 0 ? string.Join(",", components.Select(c => ((dynamic)c).name)) : "None");
+
+        var labels = (JArray)issue.fields["labels"];
+        issueDetails.Add("labels", labels.Count() > 0 ? string.Join(",", labels.Select(c => ((dynamic)c).name)) : "None");
+        issueDetails.Add("storyPoints", Convert.ToString(issue.fields["aggregatetimeestimate"]));
+
+        var assignee = issue.fields["assignee"];
+        issueDetails.Add("assigneeName", assignee != null ? Convert.ToString(assignee.displayName) : "Unassigned");
+        issueDetails.Add("assigneeIconUrl", assignee != null ? Convert.ToString(assignee.avatarUrls["16x16"]) : string.Empty);
+
+        var reporter = issue.fields["reporter"];
+        issueDetails.Add("reporterName", reporter != null ? Convert.ToString(reporter.displayName) : string.Empty);
+        issueDetails.Add("reporterIconUrl", reporter != null ? Convert.ToString(reporter.avatarUrls["16x16"]) : string.Empty);
         
         bool isError;
         string razorTemplate = string.Empty;
