@@ -222,7 +222,7 @@ public class ApiHandler : PluginHandler
             {
                 font-family: Arial;
                 font-size: 12px;
-            }
+            }           
             #container
             {
                 position: absolute;
@@ -230,15 +230,20 @@ public class ApiHandler : PluginHandler
                 bottom: 0;
                 left: 0;
                 right: 0;
-                padding: 20px;
+                padding: 29px;
                 overflow: auto;
-            }
+                height: 449px;
+            }            
             @@media print
             {
                 #container
                 {
                     overflow: visible;
                 }
+            }
+            .content
+            {
+                padding-bottom: 19px;
             }
             .jiraIssueHeader
             {            
@@ -247,6 +252,11 @@ public class ApiHandler : PluginHandler
                 background-image: url('@Model[""projectIconUrl""]');
                 vertical-align: middle;
                 margin-bottom: 20px;
+            }
+            h1, h2
+            {
+                font-family: Arial;
+                color: #000;
             }
             h1
             {
@@ -370,6 +380,22 @@ public class ApiHandler : PluginHandler
                 background: no-repeat 0 center;
                 background-image: url('@Model[""reporterIconUrl""]');
             }
+            .footer {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                border-top: 1px solid #000;
+                position: fixed; 
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 49px;
+                vertical-align: middle;
+            }
+            .footer > h1
+            {
+                padding-left: 20px;
+            }
       </style>
    </head>   
    <body id='body'>        
@@ -470,6 +496,9 @@ public class ApiHandler : PluginHandler
                 </div>
             </div>
         </div>
+        <div class='footer'>
+            <h1><a href='@Model[""msmLink""]'>@Model[""msmLinkName""]</h1>
+        </div>
     </body>
 </html>";
 
@@ -534,8 +563,21 @@ public class ApiHandler : PluginHandler
         }
 
         issueDetails.Add("description", HttpUtility.HtmlEncode(Convert.ToString(issue.fields["description"])));
-        issueDetails.Add("msmLink", string.Format("{0}/RFP/Forms/Request?id={1}", this.MSMBaseUrl, Convert.ToString(issue.fields[this.CustomFieldId])));
-        
+        issueDetails.Add("msmLink", string.Empty);
+        issueDetails.Add("msmLinkName", string.Empty);
+
+        if(issue.fields[this.CustomFieldId] != null)
+        {
+            var requestId = Convert.ToString(issue.fields[this.CustomFieldId]);
+
+            try
+            {
+                var requestResponse = JObject.Parse(ProcessRequest(BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId)), GetEncodedCredentials(this.MSMAPIKey)));
+                issueDetails["msmLinkName"] = string.Format("{0}-{1} {2}", requestResponse["entity"]["data"]["type"]["acronym"], requestResponse["entity"]["data"]["number"], requestResponse["entity"]["data"]["description"]);
+                issueDetails["msmLink"] = string.Format("{0}{1}/RFP/Forms/Request.aspx?id={1}", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, requestId);
+            } catch {} //swallow any errors and simply do not return any MSM link details
+        }
+
 
         bool isError;
         string razorTemplate = string.Empty;

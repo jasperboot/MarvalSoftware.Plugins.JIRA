@@ -1,4 +1,4 @@
-﻿<%@ WebHandler Language="C#" Class="ApiHandler" %>
+﻿<%@ WebHandler Language="C#" Class="SearchHandler" %>
 
 using System;
 using System.IO;
