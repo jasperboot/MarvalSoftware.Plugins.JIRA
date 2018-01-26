@@ -117,104 +117,7 @@ public class ApiHandler : PluginHandler
     private static readonly int hour = 60 * minute;
     private static readonly int day = 24 * hour;
     private static readonly int month = 30 * day;
-        
-    /// <summary>
-    /// Handle Request
-    /// </summary>
-    public override void HandleRequest(HttpContext context)
-    {
-        ProcessParamaters(context.Request);
-
-        var action = context.Request.QueryString["action"];
-        RouteRequest(action, context);
-    }
-
-    public override bool IsReusable
-    {
-        get { return false; }
-    }
-
-    /// <summary>
-    /// Get Paramaters from QueryString
-    /// </summary>
-    private void ProcessParamaters(HttpRequest httpRequest)
-    {
-        int.TryParse(httpRequest.Params["requestNumber"], out MsmRequestNo);
-        JiraIssueNo = httpRequest.Params["issueNumber"] ?? string.Empty;
-        JiraSummary = httpRequest.Params["issueSummary"] ?? string.Empty;
-        JiraType = httpRequest.Params["issueType"] ?? string.Empty;
-        JiraProject = httpRequest.Params["project"] ?? string.Empty;
-        JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
-        AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
-        MSMContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
-        this.IssueUrl = httpRequest.Params["issueUrl"] ?? string.Empty;
-    }
-
-    /// <summary>
-    /// Route Request via Action
-    /// </summary>
-    private void RouteRequest(string action, HttpContext context)
-    {
-        HttpWebRequest httpWebRequest;
-
-        switch (action)
-        {
-            case "PreRequisiteCheck":
-                context.Response.Write(PreRequisiteCheck());
-                break;
-            case "GetJiraIssues":
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, this.MsmRequestNo));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
-                break;
-            case "LinkJiraIssue":
-                UpdateJiraIssue(this.MsmRequestNo);
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", JiraIssueNo));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
-                break;
-            case "UnlinkJiraIssue":
-                context.Response.Write(UpdateJiraIssue(null));
-                break;
-            case "CreateJiraIssue":
-                dynamic result = CreateJiraIssue();
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", result.key));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
-                break;
-            case "MoveStatus":
-                MoveMsmStatus(context.Request);
-                break;
-            case "GetProjectsIssueTypes":
-                SortedDictionary<string, string[]> results = GetJIRAProjectIssueTypeMapping();
-                context.Response.Write(JsonConvert.SerializeObject(results));
-                break;
-            case "GetJiraUsers":
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("user/search?username={0}", this.MSMContactEmail));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
-                break;
-            case "SendAttachments":
-                if (!String.IsNullOrEmpty(AttachmentIds))
-                {
-                    int[] attachmentNumIds = Array.ConvertAll<string, int>(AttachmentIds.Split(','), Convert.ToInt32);
-                    List<AttachmentViewInfo> att = GetAttachmentDTOs(attachmentNumIds);
-                    string attachmentResult = PostAttachments(att, JiraIssueNo);
-                    context.Response.Write(attachmentResult);
-                }
-                break;
-            case "ViewSummary":
-                httpWebRequest = BuildRequest(this.IssueUrl);
-                context.Response.Write(this.BuildPreview(ProcessRequest(httpWebRequest, this.JiraCredentials)));
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Build a summary preview of the jira issue to display in MSM
-    /// </summary>
-    /// <returns></returns>
-    private string BuildPreview(string issueString)
-    {
-        if (string.IsNullOrEmpty(issueString)) return string.Empty;
-
-        const string jiraIssueSummaryTemplate =
+            const string jiraIssueSummaryTemplate =
             @"<html xmlns='http://www.w3.org/1999/xhtml'>
    <head>      
       <style>
@@ -255,7 +158,6 @@ public class ApiHandler : PluginHandler
             }            
             h1
             {
-                line-height: 20px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -386,11 +288,14 @@ public class ApiHandler : PluginHandler
                 right: 0;
                 height: 49px;
                 vertical-align: middle;
+                padding-left: 30px;
+                line-height: 30px;
             }
             .footer > h1
             {
-                padding-top: 10px;
-                padding-left: 62px;
+                padding-left: 42px;
+                background: no-repeat 0 center;
+                background-image: url('@Model[""requestTypeIconUrl""]');
             }
             a 
             {
@@ -500,13 +405,126 @@ public class ApiHandler : PluginHandler
                   </div>
                 </div>
             </div>
-        </div>
+        </div>        
         <div class='footer'>
-            <h1><a href='@Model[""msmLink""]'>@Model[""msmLinkName""]</h1>
+            @if(!string.IsNullOrEmpty(Model[""msmLink""]))
+            {
+            <h1><a href='@Model[""msmLink""]' target='_blank'>@Model[""msmLinkName""]</h1>
+            }
         </div>
     </body>
 </html>";
+        
+    /// <summary>
+    /// Handle Request
+    /// </summary>
+    public override void HandleRequest(HttpContext context)
+    {
+        ProcessParamaters(context.Request);
 
+        var action = context.Request.QueryString["action"];
+        RouteRequest(action, context);
+    }
+
+    public override bool IsReusable
+    {
+        get { return false; }
+    }
+
+    /// <summary>
+    /// Get Paramaters from QueryString
+    /// </summary>
+    private void ProcessParamaters(HttpRequest httpRequest)
+    {
+        int.TryParse(httpRequest.Params["requestNumber"], out MsmRequestNo);
+        JiraIssueNo = httpRequest.Params["issueNumber"] ?? string.Empty;
+        JiraSummary = httpRequest.Params["issueSummary"] ?? string.Empty;
+        JiraType = httpRequest.Params["issueType"] ?? string.Empty;
+        JiraProject = httpRequest.Params["project"] ?? string.Empty;
+        JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
+        AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
+        MSMContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
+        this.IssueUrl = httpRequest.Params["issueUrl"] ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Route Request via Action
+    /// </summary>
+    private void RouteRequest(string action, HttpContext context)
+    {
+        HttpWebRequest httpWebRequest;
+
+        switch (action)
+        {
+            case "PreRequisiteCheck":
+                context.Response.Write(PreRequisiteCheck());
+                break;
+            case "GetJiraIssues":
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, this.MsmRequestNo));
+                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                break;
+            case "LinkJiraIssue":
+                UpdateJiraIssue(this.MsmRequestNo);
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", JiraIssueNo));
+                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                break;
+            case "UnlinkJiraIssue":
+                context.Response.Write(UpdateJiraIssue(null));
+                break;
+            case "CreateJiraIssue":
+                dynamic result = CreateJiraIssue();
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", result.key));
+                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                break;
+            case "MoveStatus":
+                MoveMsmStatus(context.Request);
+                break;
+            case "GetProjectsIssueTypes":
+                SortedDictionary<string, string[]> results = GetJIRAProjectIssueTypeMapping();
+                context.Response.Write(JsonConvert.SerializeObject(results));
+                break;
+            case "GetJiraUsers":
+                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("user/search?username={0}", this.MSMContactEmail));
+                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                break;
+            case "SendAttachments":
+                if (!String.IsNullOrEmpty(AttachmentIds))
+                {
+                    int[] attachmentNumIds = Array.ConvertAll<string, int>(AttachmentIds.Split(','), Convert.ToInt32);
+                    List<AttachmentViewInfo> att = GetAttachmentDTOs(attachmentNumIds);
+                    string attachmentResult = PostAttachments(att, JiraIssueNo);
+                    context.Response.Write(attachmentResult);
+                }
+                break;
+            case "ViewSummary":
+                httpWebRequest = BuildRequest(this.IssueUrl);
+                context.Response.Write(this.BuildPreview(ProcessRequest(httpWebRequest, this.JiraCredentials)));
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Build a summary preview of the jira issue to display in MSM
+    /// </summary>
+    /// <returns></returns>
+    private string BuildPreview(string issueString)
+    {
+        if (string.IsNullOrEmpty(issueString)) return string.Empty;
+
+        var issueDetails = PopulateIssueDetails(issueString);
+
+        bool isError;
+        string razorTemplate = string.Empty;
+        using (var razor = new MarvalSoftware.RazorHelper())
+        {
+            razorTemplate = razor.Render(jiraIssueSummaryTemplate, issueDetails, out isError);
+        }
+
+        return razorTemplate;
+    }
+
+    private Dictionary<String, String> PopulateIssueDetails(String issueString)
+    {
         var issue = JsonHelper.FromJSON(issueString);
         var issueDetails = new Dictionary<string, string>();
 
@@ -537,7 +555,7 @@ public class ApiHandler : PluginHandler
 
         var fixVersions = (JArray)issue.fields["fixVersions"];
         issueDetails.Add("fixVersions", fixVersions.Count() > 0 ? string.Join(",", fixVersions.Select(fv => ((dynamic)fv).name)) : "None");
-        
+
         var components = (JArray)issue.fields["components"];
         issueDetails.Add("components", components.Count() > 0 ? string.Join(",", components.Select(c => ((dynamic)c).name)) : "None");
 
@@ -555,43 +573,51 @@ public class ApiHandler : PluginHandler
 
         DateTime createdDate;
         issueDetails.Add("created", string.Empty);
-        if(DateTime.TryParse(Convert.ToString(issue.fields["created"]), out createdDate))
+        if (DateTime.TryParse(Convert.ToString(issue.fields["created"]), out createdDate))
         {
-            issueDetails["created"] = GetRelativeTime(createdDate);
+            issueDetails["created"] = ApiHandler.GetRelativeTime(createdDate);
         }
 
         DateTime updatedDate;
         issueDetails.Add("updated", string.Empty);
-        if(DateTime.TryParse(Convert.ToString(issue.fields["updated"]), out updatedDate))
+        if (DateTime.TryParse(Convert.ToString(issue.fields["updated"]), out updatedDate))
         {
-            issueDetails["updated"] = GetRelativeTime(updatedDate);
+            issueDetails["updated"] = ApiHandler.GetRelativeTime(updatedDate);
         }
 
         issueDetails.Add("description", HttpUtility.HtmlEncode(Convert.ToString(issue.fields["description"])));
         issueDetails.Add("msmLink", string.Empty);
         issueDetails.Add("msmLinkName", string.Empty);
+        issueDetails.Add("requestTypeIconUrl", string.Empty);
 
-        if(issue.fields[this.CustomFieldId] != null)
+        if (issue.fields[this.CustomFieldId] != null)
         {
             var requestId = Convert.ToString(issue.fields[this.CustomFieldId]);
 
             try
             {
-                var requestResponse = JObject.Parse(ProcessRequest(BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId)), GetEncodedCredentials(this.MSMAPIKey)));
+                var requestResponse = JObject.Parse(ApiHandler.ProcessRequest(ApiHandler.BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId)), this.GetEncodedCredentials(this.MSMAPIKey)));
                 issueDetails["msmLinkName"] = string.Format("{0}-{1} {2}", requestResponse["entity"]["data"]["type"]["acronym"], requestResponse["entity"]["data"]["number"], requestResponse["entity"]["data"]["description"]);
-                issueDetails["msmLink"] = string.Format("{0}{1}/RFP/Forms/Request.aspx?id={1}", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, requestId);
-            } catch {} //swallow any errors and simply do not return any MSM link details
+                issueDetails["msmLink"] = string.Format("{0}{1}/RFP/Forms/Request.aspx?id={2}", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, requestId);
+                issueDetails["requestTypeIconUrl"] = this.GetRequestBaseTypeIconUrl(Convert.ToInt32(requestResponse["entity"]["data"]["type"]["baseTypeId"]));
+            }
+            catch
+            {
+            } //swallow any errors and simply do not return any MSM link details
         }
 
+        return issueDetails;
+    }
 
-        bool isError;
-        string razorTemplate = string.Empty;
-        using (var razor = new MarvalSoftware.RazorHelper())
+    private string GetRequestBaseTypeIconUrl(int requestBaseType)
+    {
+        var baseRequestType = (MarvalSoftware.ServiceDesk.ServiceSupport.BaseRequestTypes)requestBaseType;
+        string icon = baseRequestType.ToString().ToLower();
+        if (icon == "changerequest")
         {
-            razorTemplate = razor.Render(jiraIssueSummaryTemplate, issueDetails, out isError);
+            icon = "change";
         }
-
-        return razorTemplate;
+        return string.Format("{0}{1}/Assets/Skins/{2}/Icons/{3}_32.png", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, MarvalSoftware.UI.WebUI.Style.StyleSheetManager.Skin, icon);
     }
 
     /// <summary>
