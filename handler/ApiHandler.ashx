@@ -252,12 +252,7 @@ public class ApiHandler : PluginHandler
                 background-image: url('@Model[""projectIconUrl""]');
                 vertical-align: middle;
                 margin-bottom: 20px;
-            }
-            h1, h2
-            {
-                font-family: Arial;
-                color: #000;
-            }
+            }            
             h1
             {
                 line-height: 20px;
@@ -394,7 +389,17 @@ public class ApiHandler : PluginHandler
             }
             .footer > h1
             {
-                padding-left: 20px;
+                padding-top: 10px;
+                padding-left: 62px;
+            }
+            a 
+            {
+                color: #000;
+                text-decoration: underline;
+            }
+            a:hover
+            {
+	            color: #F00;
             }
       </style>
    </head>   
