@@ -585,7 +585,7 @@ public class ApiHandler : PluginHandler
             issueDetails["updated"] = ApiHandler.GetRelativeTime(updatedDate);
         }
 
-        issueDetails.Add("description", HttpUtility.HtmlEncode(Convert.ToString(issue.fields["description"])));
+        issueDetails.Add("description", WikiNetParser.WikiProvider.ConvertToHtml(Convert.ToString(issue.fields["description"])));
         issueDetails.Add("msmLink", string.Empty);
         issueDetails.Add("msmLinkName", string.Empty);
         issueDetails.Add("requestTypeIconUrl", string.Empty);
