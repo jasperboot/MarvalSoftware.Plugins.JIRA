@@ -291,11 +291,15 @@ public class ApiHandler : PluginHandler
                 padding-left: 30px;
                 line-height: 30px;
             }
-            .footer > h1
+            .footer > h2
             {
+                margin: 0;
+                margin-top: 5px;
+                padding-top: 5px;
                 padding-left: 42px;
                 background: no-repeat 0 center;
                 background-image: url('@Model[""requestTypeIconUrl""]');
+                font-size: 16px;
             }
             a 
             {
@@ -409,11 +413,11 @@ public class ApiHandler : PluginHandler
         <div class='footer'>
             @if(!string.IsNullOrEmpty(Model[""msmLink""]))
             {
-            <h1><a href='@Model[""msmLink""]' target='_blank' title=""@Model[""msmLinkName""]"">@Model[""msmLinkName""]</a></h1>
+            <h2><a href='@Model[""msmLink""]' target='_blank' title=""@Model[""msmLinkName""]"">@Model[""msmLinkName""]</a></h2>
             }
             @if(string.IsNullOrEmpty(Model[""msmLink""]) && !string.IsNullOrEmpty(Model[""msmLinkName""]))
             {
-            <h1 title=""@Model[""msmLinkName""]"">@Model[""msmLinkName""]</h1>
+            <h2 title=""@Model[""msmLinkName""]"">@Model[""msmLinkName""]</h2>
             }
         </div>
     </body>
