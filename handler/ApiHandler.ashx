@@ -409,7 +409,11 @@ public class ApiHandler : PluginHandler
         <div class='footer'>
             @if(!string.IsNullOrEmpty(Model[""msmLink""]))
             {
-            <h1><a href='@Model[""msmLink""]' target='_blank'>@Model[""msmLinkName""]</h1>
+            <h1><a href='@Model[""msmLink""]' target='_blank' title=""@Model[""msmLinkName""]"">@Model[""msmLinkName""]</a></h1>
+            }
+            @if(string.IsNullOrEmpty(Model[""msmLink""]) && !string.IsNullOrEmpty(Model[""msmLinkName""]))
+            {
+            <h1 title=""@Model[""msmLinkName""]"">@Model[""msmLinkName""]</h1>
             }
         </div>
     </body>
@@ -585,7 +589,7 @@ public class ApiHandler : PluginHandler
             issueDetails["updated"] = ApiHandler.GetRelativeTime(updatedDate);
         }
 
-        issueDetails.Add("description", WikiNetParser.WikiProvider.ConvertToHtml(Convert.ToString(issue.fields["description"])));
+        issueDetails.Add("description", ApiHandler.ProcessJiraDescription(issue));
         issueDetails.Add("msmLink", string.Empty);
         issueDetails.Add("msmLinkName", string.Empty);
         issueDetails.Add("requestTypeIconUrl", string.Empty);
@@ -593,20 +597,45 @@ public class ApiHandler : PluginHandler
         if (issue.fields[this.CustomFieldId] != null)
         {
             var requestId = Convert.ToString(issue.fields[this.CustomFieldId]);
+            var msmResponse = string.Empty;
 
             try
             {
-                var requestResponse = JObject.Parse(ApiHandler.ProcessRequest(ApiHandler.BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId)), this.GetEncodedCredentials(this.MSMAPIKey)));
+                msmResponse = ApiHandler.ProcessRequest(ApiHandler.BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId)), this.GetEncodedCredentials(this.MSMAPIKey));
+                var requestResponse = JObject.Parse(msmResponse);
                 issueDetails["msmLinkName"] = string.Format("{0}-{1} {2}", requestResponse["entity"]["data"]["type"]["acronym"], requestResponse["entity"]["data"]["number"], requestResponse["entity"]["data"]["description"]);
                 issueDetails["msmLink"] = string.Format("{0}{1}/RFP/Forms/Request.aspx?id={2}", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, requestId);
                 issueDetails["requestTypeIconUrl"] = this.GetRequestBaseTypeIconUrl(Convert.ToInt32(requestResponse["entity"]["data"]["type"]["baseTypeId"]));
             }
-            catch
+            catch(Exception ex)
             {
-            } //swallow any errors and simply do not return any MSM link details
+                issueDetails["msmLinkName"] = string.Format("An Error occured: {0}, The MSM API Response was: {1}", ex.Message, msmResponse);
+            }
         }
 
         return issueDetails;
+    }
+
+    private static string ProcessJiraDescription(dynamic issue)
+    {
+        var description = Convert.ToString(issue.fields["description"]);
+        if (string.IsNullOrEmpty(description)) return description;
+
+        description = WikiNetParser.WikiProvider.ConvertToHtml(description);
+        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(description, "!(.*)!"))
+        {
+            if (match.Groups.Count > 1)
+            {
+                var filename = match.Groups[1].Value;
+                var attachment = (dynamic)((JArray)issue.fields["attachment"]).FirstOrDefault(att => string.Equals(Convert.ToString(((dynamic)att).filename), filename, StringComparison.OrdinalIgnoreCase));
+                if (attachment != null)
+                {
+                    description = System.Text.RegularExpressions.Regex.Replace(description, match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'/>", Convert.ToString(attachment.content), filename));
+                }
+            }
+        }
+
+        return description;
     }
 
     private string GetRequestBaseTypeIconUrl(int requestBaseType)
