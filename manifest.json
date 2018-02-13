@@ -1,7 +1,7 @@
 ﻿{
   "Name": "MarvalSoftware.Plugins.JIRA",
   "Organisation": "MarvalSoftware",
-  "DisplayName": "@@jira_plugin_displayname",
+  "DisplayName": "@@PluginDisplayname",
   "Icon": "img/jira_16.png",
   "Version": "3.0.0",
   "SupportedVersions": [
@@ -14,16 +14,16 @@
   "HtmlImportFile": "MarvalSoftware.Plugins.JIRA.html",
   "TagName": "marval-software-plugins-jira",
   "GlobalSettings": [
-    "JIRABaseUrl",
-    "JIRACustomFieldID",
-    "JIRACustomFieldName",
-    "JIRAUsername",
-    "JIRAPassword",
-    "MSMAPIKey"
+    "@@JIRABaseUrl",
+    "@@JIRACustomFieldID",
+    "@@JIRACustomFieldName",
+    "@@JIRAUsername",
+    "@@JIRAPassword",
+    "@@MSMAPIKey"
   ],
   "QuickSearchTypes": [
 	  {
-		  "Name": "Jira",
+		  "Name": "@@JiraIssue",
 		  "Handler": "handler/SearchHandler.ashx" 
 	  }
   ]

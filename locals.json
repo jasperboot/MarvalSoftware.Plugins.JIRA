@@ -1,10 +1,17 @@
 {
 	"defaultCulture": "en",
-	[{
-		"en": {
-			[{
-				"jira_plugin_displayname": "JIRA"
-			}]
-		}
-	}]
+	"resources": 
+		[{
+			"en": 
+				[{
+					"PluginDisplayname": "JIRA",
+					"JIRABaseUrl": "JIRA Base Url",
+					"JIRACustomFieldID": "JIRA Custom Field ID",
+					"JIRACustomFieldName": "JIRA Custom Field Name",
+					"JIRAUsername": "JIRA Username",
+					"JIRAPassword": "JIRA Password",
+					"MSMAPIKey": "MSM API Key",
+					"JiraIssue": "Jira Issue"
+				}]			
+		}]	
 }
