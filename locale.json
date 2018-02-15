@@ -2,7 +2,7 @@
 	"defaultLocale": "en-GB",
 	"resources": 
 		[{
-			"en": 
+			"en-GB": 
 				[{
 					"PluginDisplayname": "JIRA",
 					"JIRABaseUrl": "JIRA Base Url",
