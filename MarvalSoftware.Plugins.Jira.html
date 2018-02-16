@@ -225,28 +225,28 @@
     </style>
     <div class="MarvalSoftware-Jira">
         <div class="header">
-            <h1>Linked Issues</h1>
-            <a href="javascript:void(0);">Link</a>
+            <h1>@@LinkedIssuesTitle</h1>
+            <a href="javascript:void(0);">@@Link</a>
         </div>
         <div class="issues">
         </div>
         <div class="newIssue">
-            <h1>New Issue</h1>
+            <h1>@@NewIssue</h1>
             <div class="issueTypes">
                 <div class="typeLoading">
                     <select class="IssueTypeSelect">
-                        <option selected disabled value=""> -- Issue Type -- </option>
+                        <option selected disabled value="">@@IssueTypeSelector</option>
                     </select>
                 </div>
             </div>
             <div class="issueSummaryWrapper">
                 <input type="text" placeholder="Summary" class="text" maxlength="255" />
             </div>
-            <button disabled>Create</button>
+            <button disabled>@@Create</button>
             <div class="issueOptions">
                 <a href="javascript:void(0);" class="selectAttachments"></a>
                 <input type="checkbox" disabled />
-                <label> MSM Contact as Reporter</label>
+                <label>@@MSMContactReporter</label>
             </div>
         </div>
     </div>
@@ -260,7 +260,7 @@
         </div>
         <div class="right">
             <span class="assignee"></span>
-            <a href="javascript:void(0);" class="unlink">Unlink</a>
+            <a href="javascript:void(0);" class="unlink">@@Unlink</a>
         </div>
     </div>
 </template>
@@ -277,16 +277,16 @@
     </style>
     <div class="MarvalSoftware-Jira-Errors">
         <div class="title">
-            <h3>Ensure all configuration settings are correct.</h3>
+            <h3>@@EnsureConfigurationSettingsCorrect</h3>
         </div>
         <div>
             <ul class="jiraConfig">
-                <li id="jiraBaseUrl"> JIRA Base Url </li>
-                <li id="jiraProject"> JIRA Project </li>
-                <li id="jiraCustomFieldID"> JIRA Customfield ID </li>
-                <li id="jiraCustomFieldName"> JIRA Customfield Name </li>
-                <li id="jiraUsername"> JIRA Username</li>
-                <li id="jiraPassword"> JIRA Password </li>
+                <li id="jiraBaseUrl">@@JIRABaseUrl</li>                
+                <li id="jiraCustomFieldID">@@JIRACustomFieldID</li>
+                <li id="jiraCustomFieldName">@@JIRACustomFieldName</li>
+                <li id="jiraUsername">@@JIRAUsername</li>
+                <li id="jiraPassword">@@JIRAPassword</li>
+				<li id="msmApiKey">@@MSMAPIKey</li>
             </ul>
             <h4></h4>
         </div>
@@ -342,7 +342,8 @@
                 this._contactEmail = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getPage().getContactPreferredEmail();
                 this._requestDescription = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getPage().getDescription();
                 this._attachments = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getPage().getAttachments();
-
+				MarvalSoftware.Plugins.PluginResourceManager.getInstance().loadResources(this._getPluginId(), this._getPluginLocale());
+								
                 this._selectedAttachmentIds = [];
                 if (this._requestNumber) {
                     this._setUpQuickMenu();
@@ -525,7 +526,7 @@
                     var templateElement = window.top.document.importNode(template, true);
                     var checkboxLabel = templateElement.querySelector(".attachmentLabel");
                     var checkbox = templateElement.querySelector(".attachmentCheckbox");
-                    checkbox.name = "attachment";
+                    checkbox.name = this._getResource("@@AttachmentCheckBox");
                     checkbox.value = this._attachments[i].Identifier;
                     checkbox.id = this._attachments[i].Name;
                     checkbox.checked = this._selectedAttachmentIds.indexOf(this._attachments[i].Identifier) > -1 ? true : false;
@@ -551,7 +552,7 @@
             },
 
             _setSelectedAttachmentCount : function(count){
-                this._selectAttachmentElement.innerText = "Attachments (" + count + "/" + this._attachments.length + " selected)";
+                this._selectAttachmentElement.innerText = this._getResource("@@SelectedAttachments", "" + count + "/" + this._attachments.length + "");
             },
 
             _showAttachmentsPopup: function (sender, e) {
@@ -566,7 +567,7 @@
                 eventManager.addHandler(selectNone, "click", this._deselectAllAttachments, this);
                 this._renderAttachments(this._attachmentsCheckboxList);
                 var attachmentPopup = MarvalSoftware.UI.MessageBox.show(
-                    "New Jira Issue",
+                    this._getResource("@@AttachmentPopUpTitle"),
                     templateElement,
                     MarvalSoftware.UI.MessageBox.INFORMATION,
                     [MarvalSoftware.UI.MessageBox.Buttons.OK, MarvalSoftware.UI.MessageBox.Buttons.CANCEL],
@@ -606,7 +607,7 @@
                 if (!this._pluginWindow) {
                     this._pluginWindow = new MarvalSoftware.UI.Window({
                         appendToElement: window.top.document.getElementById("aspnetForm"),
-                        title: "JIRA",
+                        title: this._getResource("PluginDisplayname"),
                         height: 680,
                         width: 700,
                         minHeight: 262,
@@ -639,11 +640,11 @@
                         var id = "#" + item;
                         errorMessages.querySelector(id).style.display = "block";
                     }
-                    errorMessages.querySelector('div > h3').textContent = "The following settings have not been configured:";
-                    errorMessages.querySelector('div > h4').textContent = "Please add these via the plugin page";
+                    errorMessages.querySelector('div > h3').textContent = this._getResource("@@SettingsNotConfigured");
+                    errorMessages.querySelector('div > h4').textContent = this._getResource("@@AddConfigurationViaPluginPage");
                 }
                 MarvalSoftware.UI.MessageBox.show(
-                    "Invalid JIRA Configuration",
+                    this._getResource("@@InvalidJiraConfiguration"),
                     errorMessages,
                     MarvalSoftware.UI.MessageBox.Types.ERROR,
                     [MarvalSoftware.UI.MessageBox.Buttons.OK],
@@ -655,7 +656,27 @@
             _getPluginPath: function () {
                 return this.attributes["data-pluginpath"].value;
             },
-
+			
+			_getPluginId: function () {
+                return this.attributes["data-pluginid"].value;
+            },
+			
+			_getPluginLocale: function () {
+                return this.attributes["data-pluginlocalejson"].value;
+            },
+			
+			_getPluginCulture: function () {
+                return this.attributes["data-pluginculture"].value;
+            },
+	
+			_getResource: function (key){
+				return MarvalSoftware.Plugins.PluginResourceManager.getInstance().getString(this._getPluginId(), key, this._getPluginCulture());
+			},
+			
+			_getResource: function (key, formatObject){
+				return MarvalSoftware.Plugins.PluginResourceManager.getInstance().getString(this._getPluginId(), key, this._getPluginCulture(), formatObject);
+			},
+			
             _setUpQuickMenu: function () {
                 var styleElement = window.top.document.createElement("style");
                 window.top.document.body.appendChild(styleElement);
@@ -665,7 +686,7 @@
                 var quickMenu = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getControl(quickMenuId);
                 quickMenu.addMenuItem({
                     Identifier: "MarvalSoftware-Jira",
-                    Label: "JIRA",
+                    Label: this._getResource("@@PluginDisplayname"),
                     HRef: "javascript:void(0);",
                     CssClass: "MarvalSoftware-Jira-quick-menu-item"
                 });
@@ -695,11 +716,11 @@
 
             _linkElement_click: function () {
                 var divElement = window.top.document.createElement("DIV");
-                divElement.innerHTML = 'Please enter a JIRA issue number below (e.g ABC-XXX): <div style="z-index:400"><input style="margin-top: 5px; height: 20px; width: 100%; box-sizing: border-box" class="text" type="text" placeholder="Issue Number" /></div>';
+                divElement.innerHTML = this._getResource("@@EnterJiraIssueNumber");
                 var aElement = divElement.getElementsByTagName("INPUT")[0];
 
                 var messageBox = MarvalSoftware.UI.MessageBox.show(
-                    "Link JIRA Issue",
+                    this._getResource("@@LinkJiraIssueTitle"),
                     divElement,
                     MarvalSoftware.UI.MessageBox.Types.INFORMATION,
                     [MarvalSoftware.UI.MessageBox.Buttons.OK, MarvalSoftware.UI.MessageBox.Buttons.CANCEL],

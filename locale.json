@@ -11,7 +11,23 @@
 					"JIRAUsername": "JIRA Username",
 					"JIRAPassword": "JIRA Password",
 					"MSMAPIKey": "MSM API Key",
-					"JiraIssue": "Jira Issue"
+					"JiraIssue": "Jira Issue",
+					"AttachmentCheckBox" : "attachment",
+					"SelectedAttachments": "Attachments ({0} selected)",
+					"AttachmentPopUpTitle": "New Jira Issue",
+					"InvalidJiraConfiguration": "Invalid JIRA Configuration",
+					"SettingsNotConfigured": "The following settings have not been configured:",
+					"AddConfigurationViaPluginPage": "Please add these via the plugin page",
+					"EnterJiraIssueNumber": "Please enter a JIRA issue number below (e.g ABC-XXX): <div style='z-index:400'><input style='margin-top: 5px; height: 20px; width: 100%; box-sizing: border-box' class='text' type='text' placeholder='Issue Number' /></div>",
+					"LinkJiraIssueTitle": "Link JIRA Issue",
+					"LinkedIssuesTitle": "Linked Issues",
+					"Link": "Link",
+					"NewIssue": "New Issue",
+					"IssueTypeSelector": " -- Issue Type -- ",
+					"Create": "Create",
+					"MSMContactReporter": "MSM Contact as Reporter",
+					"Unlink": "Unlink",
+					"EnsureConfigurationSettingsCorrect.": "Ensure all configuration settings are correct."
 				}]			
 		}]	
 }
