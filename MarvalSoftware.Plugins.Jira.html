@@ -342,8 +342,7 @@
                 this._contactEmail = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getPage().getContactPreferredEmail();
                 this._requestDescription = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getPage().getDescription();
                 this._attachments = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getPage().getAttachments();
-				MarvalSoftware.Plugins.PluginResourceManager.getInstance().loadResources(this._getPluginId(), this._getPluginLocale());
-								
+												
                 this._selectedAttachmentIds = [];
                 if (this._requestNumber) {
                     this._setUpQuickMenu();
@@ -454,10 +453,27 @@
                     }.bind(this)
                 });
             },
+			
+			_preProcessResourceString: function(content) {
+				var resourceTagRegEx = /@@\w+\b/g;
+				var match = resourceTagRegEx.exec(content);
 
+				while(match) {					
+					var foundTag = match[0];
+					var resourcedKey = this._getString(foundTag);
+					content = content.replace(foundTag, resourcedKey);	
+					
+					var match = resourceTagRegEx.exec(content);
+				}
+				
+				return content;
+			},
+			
             _renderElement: function () {
-                var template = document.querySelector('template').content;
+                var template = document.querySelector('template').content;				
                 this._element = window.top.document.importNode(template, true);
+				var jiraTemplate = this._element.querySelector(".MarvalSoftware-Jira");
+				jiraTemplate.innerHTML = this._preProcessResourceString(jiraTemplate.innerHTML);
                 var eventManager = MarvalSoftware.UI.Dom.EventManager.getInstance();
                 eventManager.addHandler(this._element.querySelector(".header > a"), "click", this._linkElement_click, this);
                 this._issuesElement = this._element.querySelector(".issues");
@@ -526,7 +542,7 @@
                     var templateElement = window.top.document.importNode(template, true);
                     var checkboxLabel = templateElement.querySelector(".attachmentLabel");
                     var checkbox = templateElement.querySelector(".attachmentCheckbox");
-                    checkbox.name = this._getResource("@@AttachmentCheckBox");
+                    checkbox.name = this._getString("@@AttachmentCheckBox");
                     checkbox.value = this._attachments[i].Identifier;
                     checkbox.id = this._attachments[i].Name;
                     checkbox.checked = this._selectedAttachmentIds.indexOf(this._attachments[i].Identifier) > -1 ? true : false;
@@ -552,7 +568,7 @@
             },
 
             _setSelectedAttachmentCount : function(count){
-                this._selectAttachmentElement.innerText = this._getResource("@@SelectedAttachments", "" + count + "/" + this._attachments.length + "");
+                this._selectAttachmentElement.innerText = this._getString("@@SelectedAttachments", "" + count + "/" + this._attachments.length + "");
             },
 
             _showAttachmentsPopup: function (sender, e) {
@@ -567,7 +583,7 @@
                 eventManager.addHandler(selectNone, "click", this._deselectAllAttachments, this);
                 this._renderAttachments(this._attachmentsCheckboxList);
                 var attachmentPopup = MarvalSoftware.UI.MessageBox.show(
-                    this._getResource("@@AttachmentPopUpTitle"),
+                    this._getString("@@AttachmentPopUpTitle"),
                     templateElement,
                     MarvalSoftware.UI.MessageBox.INFORMATION,
                     [MarvalSoftware.UI.MessageBox.Buttons.OK, MarvalSoftware.UI.MessageBox.Buttons.CANCEL],
@@ -607,7 +623,7 @@
                 if (!this._pluginWindow) {
                     this._pluginWindow = new MarvalSoftware.UI.Window({
                         appendToElement: window.top.document.getElementById("aspnetForm"),
-                        title: this._getResource("PluginDisplayname"),
+                        title: this._getString("@@PluginDisplayname"),
                         height: 680,
                         width: 700,
                         minHeight: 262,
@@ -640,11 +656,11 @@
                         var id = "#" + item;
                         errorMessages.querySelector(id).style.display = "block";
                     }
-                    errorMessages.querySelector('div > h3').textContent = this._getResource("@@SettingsNotConfigured");
-                    errorMessages.querySelector('div > h4').textContent = this._getResource("@@AddConfigurationViaPluginPage");
+                    errorMessages.querySelector('div > h3').textContent = this._getString("@@SettingsNotConfigured");
+                    errorMessages.querySelector('div > h4').textContent = this._getString("@@AddConfigurationViaPluginPage");
                 }
                 MarvalSoftware.UI.MessageBox.show(
-                    this._getResource("@@InvalidJiraConfiguration"),
+                    this._getString("@@InvalidJiraConfiguration"),
                     errorMessages,
                     MarvalSoftware.UI.MessageBox.Types.ERROR,
                     [MarvalSoftware.UI.MessageBox.Buttons.OK],
@@ -660,20 +676,16 @@
 			_getPluginId: function () {
                 return this.attributes["data-pluginid"].value;
             },
-			
-			_getPluginLocale: function () {
-                return this.attributes["data-pluginlocalejson"].value;
-            },
-			
+									
 			_getPluginCulture: function () {
                 return this.attributes["data-pluginculture"].value;
             },
 	
-			_getResource: function (key){
+			_getString: function (key){
 				return MarvalSoftware.Plugins.PluginResourceManager.getInstance().getString(this._getPluginId(), key, this._getPluginCulture());
 			},
 			
-			_getResource: function (key, formatObject){
+			_getString: function (key, formatObject){
 				return MarvalSoftware.Plugins.PluginResourceManager.getInstance().getString(this._getPluginId(), key, this._getPluginCulture(), formatObject);
 			},
 			
@@ -686,7 +698,7 @@
                 var quickMenu = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getControl(quickMenuId);
                 quickMenu.addMenuItem({
                     Identifier: "MarvalSoftware-Jira",
-                    Label: this._getResource("@@PluginDisplayname"),
+                    Label: this._getString("@@PluginDisplayname"),
                     HRef: "javascript:void(0);",
                     CssClass: "MarvalSoftware-Jira-quick-menu-item"
                 });
@@ -716,11 +728,11 @@
 
             _linkElement_click: function () {
                 var divElement = window.top.document.createElement("DIV");
-                divElement.innerHTML = this._getResource("@@EnterJiraIssueNumber");
+                divElement.innerHTML = this._getString("@@EnterJiraIssueNumber");
                 var aElement = divElement.getElementsByTagName("INPUT")[0];
 
                 var messageBox = MarvalSoftware.UI.MessageBox.show(
-                    this._getResource("@@LinkJiraIssueTitle"),
+                    this._getString("@@LinkJiraIssueTitle"),
                     divElement,
                     MarvalSoftware.UI.MessageBox.Types.INFORMATION,
                     [MarvalSoftware.UI.MessageBox.Buttons.OK, MarvalSoftware.UI.MessageBox.Buttons.CANCEL],

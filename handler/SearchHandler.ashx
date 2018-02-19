@@ -25,7 +25,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRACustomFieldName"];
+            return GlobalSettings["@@JIRACustomFieldName"];
         }
     }
 
@@ -33,7 +33,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRACustomFieldID"];
+            return GlobalSettings["@@JIRACustomFieldID"];
         }
     }
 
@@ -41,7 +41,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRABaseUrl"];
+            return GlobalSettings["@@JIRABaseUrl"];
         }
     }
 
@@ -57,7 +57,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRAUsername"];
+            return GlobalSettings["@@JIRAUsername"];
         }
     }
 
@@ -65,7 +65,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRAPassword"];
+            return GlobalSettings["@@JIRAPassword"];
         }
     }
 

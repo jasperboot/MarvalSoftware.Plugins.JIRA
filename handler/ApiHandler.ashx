@@ -26,7 +26,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRACustomFieldName"];
+            return GlobalSettings["@@JIRACustomFieldName"];
         }
     }
 
@@ -34,7 +34,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRACustomFieldID"];
+            return GlobalSettings["@@JIRACustomFieldID"];
         }
     }
 
@@ -42,7 +42,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRABaseUrl"];
+            return GlobalSettings["@@JIRABaseUrl"];
         }
     }
 
@@ -66,7 +66,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["MSMAPIKey"];
+            return GlobalSettings["@@MSMAPIKey"];
         }
     }
 
@@ -74,7 +74,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRAUsername"];
+            return GlobalSettings["@@JIRAUsername"];
         }
     }
 
@@ -82,7 +82,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["JIRAPassword"];
+            return GlobalSettings["@@JIRAPassword"];
         }
     }
 
