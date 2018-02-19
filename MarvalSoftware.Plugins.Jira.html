@@ -680,11 +680,7 @@
 			_getPluginCulture: function () {
                 return this.attributes["data-pluginculture"].value;
             },
-	
-			_getString: function (key){
-				return MarvalSoftware.Plugins.PluginResourceManager.getInstance().getString(this._getPluginId(), key, this._getPluginCulture());
-			},
-			
+							
 			_getString: function (key, formatObject){
 				return MarvalSoftware.Plugins.PluginResourceManager.getInstance().getString(this._getPluginId(), key, this._getPluginCulture(), formatObject);
 			},
