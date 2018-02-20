@@ -27,7 +27,10 @@
 					"Create": "Create",
 					"MSMContactReporter": "MSM Contact as Reporter",
 					"Unlink": "Unlink",
-					"EnsureConfigurationSettingsCorrect.": "Ensure all configuration settings are correct."
+					"EnsureConfigurationSettingsCorrect.": "Ensure all configuration settings are correct.",
+					"SelectRequestAttachmentHeader": "Select Request Attachment(s):",
+					"SelectAllOption": "Select All",
+					"SelectNoneOption": "Select None"
 				}]			
 		}]	
 }

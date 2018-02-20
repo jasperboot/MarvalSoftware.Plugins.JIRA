@@ -293,17 +293,19 @@
     </div>
 </template>
 <template class="attachmentPopupTemplate">
-    <p class="attachmentHeader">Select Request Attachment(s):</p>
+	<div class="MarvalSowftware-Jira-Popup-Attachments">
+    <p class="attachmentHeader">@@SelectRequestAttachmentHeader</p>
     <br />
     <div class="attachmentOptions">
-        <a href="javascript:void(0)" class="selectAll">Select All</a>
+        <a href="javascript:void(0)" class="selectAll">@@SelectAllOption</a>
         <span> | </span>
-        <a href="javascript:void(0)" class="selectNone">Select None</a>
+        <a href="javascript:void(0)" class="selectNone">@@SelectNoneOption</a>
     </div>
     <div class="attachmentCheckboxes"></div>
+	</div>
 </template>
 <template class="attachmentTemplate">
-    <div>
+    <div class="MarvalSowftware-Jira-Attachments">
         <input type="checkbox" class="attachmentCheckbox"/>
         <label class="attachmentLabel"></label>
     </div>
@@ -348,10 +350,27 @@
                     this._setUpQuickMenu();
                 }
             },
+			
+			_preProcessResourceString: function(content) {
+				var resourceTagRegEx = /@@\w+\b/g;
+				var match = resourceTagRegEx.exec(content);
+
+				while(match) {					
+					var foundTag = match[0];
+					var resourcedKey = this._getString(foundTag);
+					content = content.replace(foundTag, resourcedKey);	
+					
+					var match = resourceTagRegEx.exec(content);
+				}
+				
+				return content;
+			},
 
             _renderIssue: function (issue) {
                 var issueTemplate = document.querySelector(".issueTemplate").content;
                 var issueElement = window.top.document.importNode(issueTemplate, true);
+				var issueTemplateDiv = issueElement.querySelector(".issue");
+				issueTemplateDiv.innerHTML = this._preProcessResourceString(issueTemplateDiv.innerHTML);
                 var numberElement = issueElement.querySelector(".number");
                 numberElement.textContent = issue.key;
                 numberElement.href = issue.self;
@@ -453,22 +472,7 @@
                     }.bind(this)
                 });
             },
-			
-			_preProcessResourceString: function(content) {
-				var resourceTagRegEx = /@@\w+\b/g;
-				var match = resourceTagRegEx.exec(content);
-
-				while(match) {					
-					var foundTag = match[0];
-					var resourcedKey = this._getString(foundTag);
-					content = content.replace(foundTag, resourcedKey);	
-					
-					var match = resourceTagRegEx.exec(content);
-				}
-				
-				return content;
-			},
-			
+									
             _renderElement: function () {
                 var template = document.querySelector('template').content;				
                 this._element = window.top.document.importNode(template, true);
@@ -540,6 +544,8 @@
                 for (var i = 0; i < this._attachments.length; i++) {
                     var template = document.querySelector(".attachmentTemplate").content;
                     var templateElement = window.top.document.importNode(template, true);
+					var attachmentTemplateDiv = templateElement.querySelector(".MarvalSowftware-Jira-Attachments");
+					attachmentTemplateDiv.innerHTML = this._preProcessResourceString(attachmentTemplateDiv.innerHTML);
                     var checkboxLabel = templateElement.querySelector(".attachmentLabel");
                     var checkbox = templateElement.querySelector(".attachmentCheckbox");
                     checkbox.name = this._getString("@@AttachmentCheckBox");
@@ -576,6 +582,8 @@
                 var eventManager = MarvalSoftware.UI.Dom.EventManager.getInstance();
                 var template = document.querySelector('.attachmentPopupTemplate').content;
                 var templateElement = window.top.document.importNode(template, true);
+				var attachmentPopUpTemplateDiv = templateElement.querySelector(".MarvalSowftware-Jira-Popup-Attachments");
+				attachmentPopUpTemplateDiv.innerHTML = this._preProcessResourceString(attachmentPopUpTemplateDiv.innerHTML);
                 this._attachmentsCheckboxList = templateElement.querySelector(".attachmentCheckboxes");
                 var selectAll = templateElement.querySelector(".selectAll");
                 var selectNone = templateElement.querySelector(".selectNone");
@@ -651,6 +659,8 @@
             _errorPopup: function (result) {
                 var errorTemplate = document.querySelector('.errorTemplate').content;
                 var errorMessages = window.top.document.importNode(errorTemplate, true);
+				var errorTemplateDiv = errorMessages.querySelector(".MarvalSoftware-Jira-Errors");
+				errorTemplateDiv.innerHTML = this._preProcessResourceString(errorTemplateDiv.innerHTML);
                 if (result) {
                     for (var item in result) {
                         var id = "#" + item;
