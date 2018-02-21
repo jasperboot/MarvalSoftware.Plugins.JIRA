@@ -3,7 +3,7 @@
 	"resources": 
 		[{
 			"en-GB": 
-				[{
+			{
 					"PluginDisplayname": "JIRA",
 					"JIRABaseUrl": "JIRA Base Url",
 					"JIRACustomFieldID": "JIRA Custom Field ID",
@@ -31,6 +31,6 @@
 					"SelectRequestAttachmentHeader": "Select Request Attachment(s):",
 					"SelectAllOption": "Select All",
 					"SelectNoneOption": "Select None"
-				}]			
+			}
 		}]	
 }
