@@ -520,13 +520,13 @@ public class ApiHandler : PluginHandler
         if (string.IsNullOrEmpty(issueString)) return string.Empty;
 
         var issueDetails = this.PopulateIssueDetails(issueString);
-        this.PreProcessTemplateResourceStrings(ApiHandler.jiraIssueSummaryTemplate);
+        var processedTemplate = this.PreProcessTemplateResourceStrings(ApiHandler.jiraIssueSummaryTemplate);
 
         string razorTemplate;
         using (var razor = new RazorHelper())
         {
             bool isError;
-            razorTemplate = razor.Render(ApiHandler.jiraIssueSummaryTemplate, issueDetails, out isError);
+            razorTemplate = razor.Render(processedTemplate, issueDetails, out isError);
         }
 
         return razorTemplate;
