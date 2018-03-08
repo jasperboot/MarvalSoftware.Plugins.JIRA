@@ -7,6 +7,7 @@ using System.Text;
 using System.Web;
 using System.Dynamic;
 using System.Collections.Generic;
+using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MarvalSoftware;
@@ -26,7 +27,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRACustomFieldName"];
+            return this.GlobalSettings["@@JIRACustomFieldName"];
         }
     }
 
@@ -34,7 +35,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRACustomFieldID"];
+            return this.GlobalSettings["@@JIRACustomFieldID"];
         }
     }
 
@@ -42,7 +43,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRABaseUrl"];
+            return this.GlobalSettings["@@JIRABaseUrl"];
         }
     }
 
@@ -62,11 +63,11 @@ public class ApiHandler : PluginHandler
         }
     }
 
-    private string MSMAPIKey
+    private string MsmApiKey
     {
         get
         {
-            return GlobalSettings["@@MSMAPIKey"];
+            return this.GlobalSettings["@@MSMAPIKey"];
         }
     }
 
@@ -74,7 +75,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRAUsername"];
+            return this.GlobalSettings["@@JIRAUsername"];
         }
     }
 
@@ -82,7 +83,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRAPassword"];
+            return this.GlobalSettings["@@JIRAPassword"];
         }
     }
 
@@ -90,7 +91,7 @@ public class ApiHandler : PluginHandler
     {
         get
         {
-            return GetEncodedCredentials(String.Format("{0}:{1}", this.Username, this.Password));
+            return ApiHandler.GetEncodedCredentials(string.Format("{0}:{1}", this.Username, this.Password));
         }
     }
 
@@ -106,19 +107,18 @@ public class ApiHandler : PluginHandler
 
     private string AttachmentIds { get; set; }
 
-    private string MSMContactEmail { get; set; }
+    private string MsmContactEmail { get; set; }
 
     private string IssueUrl { get; set; }
 
     //fields
-    private int MsmRequestNo;
+    private int msmRequestNo;
     private static readonly int second = 1;
-    private static readonly int minute = 60 * second;
-    private static readonly int hour = 60 * minute;
-    private static readonly int day = 24 * hour;
-    private static readonly int month = 30 * day;
-            const string jiraIssueSummaryTemplate =
-            @"<html xmlns='http://www.w3.org/1999/xhtml'>
+    private static readonly int minute = 60 * ApiHandler.second;
+    private static readonly int hour = 60 * ApiHandler.minute;
+    private static readonly int day = 24 * ApiHandler.hour;
+    const string jiraIssueSummaryTemplate = @"
+<html xmlns='http://www.w3.org/1999/xhtml'>
    <head>      
       <style>
             html
@@ -321,51 +321,51 @@ public class ApiHandler : PluginHandler
                 </div>
                 <div class='jiraSummary'>
                     <div id='details' class='panel'>
-                        <h2>Details</h2>
+                        <h2>@@Details</h2>
                         <div class='multiColumn'>
                             <span class='keyValueSpan'>
-                                <label>Type</label>
+                                <label>@@Type</label>
                                 <span class='jiraType'>@Model[""issueTypeName""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Status</label>
+                                <label>@@Status</label>
                                 <span class='jiraStatus'>@Model[""statusName""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Priority</label>
+                                <label>@@Priority</label>
                                 <span class='jiraPriority'>@Model[""priorityName""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Resolution</label>
+                                <label>@@Resolution</label>
                                 <span>@Model[""resolution""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Affects Version/s</label>
+                                <label>@@AffectsVersion</label>
                                 <span>@Model[""affectsVersions""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Fix Version/s</label>
+                                <label>@@FixVersion</label>
                                 <span>@Model[""fixVersions""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Component/s</label>
+                                <label>@@Component</label>
                                 <span>@Model[""components""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Label/s</label>
+                                <label>@@Label</label>
                                 <span>@Model[""labels""]</span>
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Story Points</label>
+                                <label>@@StoryPoints</label>
                                 <span>@Model[""storyPoints""]</span>
                             </span>
                         </div>
                     </div>
                      <div id='People' class='panel'>
-                        <h2>People</h2>
+                        <h2>@@People</h2>
                         <div class='multiColumn'>
                             <span class='keyValueSpan'>
-                                <label>Assignee</label>
+                                <label>@@Assignee</label>
                                 @if(!string.IsNullOrEmpty(Model[""assigneeName""]))
                                 {
                                 <span class='jiraAssignee'>
@@ -378,7 +378,7 @@ public class ApiHandler : PluginHandler
                                 }
                             </span>
                             <span class='keyValueSpan'>
-                                <label>Reporter</label>
+                                <label>@@Reporter</label>
                                 @if(!string.IsNullOrEmpty(Model[""reporterName""]))
                                 {
                                 <span class='jiraReporter'>
@@ -393,18 +393,18 @@ public class ApiHandler : PluginHandler
                         </div>
                     </div>
                  <div id='Dates' class='panel'>
-                        <h2>Dates</h2>
+                        <h2>@@Dates</h2>
                         <span class='keyValueSpan'>
-                              <label>Created</label>
+                              <label>@@Created</label>
                               <span>@Model[""created""]</span>
                         </span>
                         <span class='keyValueSpan'>
-                              <label>Updated</label>
+                              <label>@@Updated</label>
                               <span>@Model[""updated""]</span>
                         </span>
                  </div>
                   <div id='Description' class='panel'>
-                        <h2>Description</h2>
+                        <h2>@@Description</h2>
                         <span>@Model[""description""]</span>
                   </div>
                 </div>
@@ -428,10 +428,10 @@ public class ApiHandler : PluginHandler
     /// </summary>
     public override void HandleRequest(HttpContext context)
     {
-        ProcessParamaters(context.Request);
+        this.ProcessParamaters(context.Request);
 
         var action = context.Request.QueryString["action"];
-        RouteRequest(action, context);
+        this.RouteRequest(action, context);
     }
 
     public override bool IsReusable
@@ -444,14 +444,14 @@ public class ApiHandler : PluginHandler
     /// </summary>
     private void ProcessParamaters(HttpRequest httpRequest)
     {
-        int.TryParse(httpRequest.Params["requestNumber"], out MsmRequestNo);
-        JiraIssueNo = httpRequest.Params["issueNumber"] ?? string.Empty;
-        JiraSummary = httpRequest.Params["issueSummary"] ?? string.Empty;
-        JiraType = httpRequest.Params["issueType"] ?? string.Empty;
-        JiraProject = httpRequest.Params["project"] ?? string.Empty;
-        JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
-        AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
-        MSMContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
+        int.TryParse(httpRequest.Params["requestNumber"], out this.msmRequestNo);
+        this.JiraIssueNo = httpRequest.Params["issueNumber"] ?? string.Empty;
+        this.JiraSummary = httpRequest.Params["issueSummary"] ?? string.Empty;
+        this.JiraType = httpRequest.Params["issueType"] ?? string.Empty;
+        this.JiraProject = httpRequest.Params["project"] ?? string.Empty;
+        this.JiraReporter = httpRequest.Params["reporter"] ?? string.Empty;
+        this.AttachmentIds = httpRequest.Params["attachments"] ?? string.Empty;
+        this.MsmContactEmail = httpRequest.Params["contactEmail"] ?? string.Empty;
         this.IssueUrl = httpRequest.Params["issueUrl"] ?? string.Empty;
     }
 
@@ -465,48 +465,48 @@ public class ApiHandler : PluginHandler
         switch (action)
         {
             case "PreRequisiteCheck":
-                context.Response.Write(PreRequisiteCheck());
+                context.Response.Write(this.PreRequisiteCheck());
                 break;
             case "GetJiraIssues":
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, this.MsmRequestNo));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("search?jql='{0}'={1}", this.CustomFieldName, this.msmRequestNo));
+                context.Response.Write(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "LinkJiraIssue":
-                UpdateJiraIssue(this.MsmRequestNo);
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", JiraIssueNo));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                this.UpdateJiraIssue(this.msmRequestNo);
+                httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("issue/{0}", this.JiraIssueNo));
+                context.Response.Write(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "UnlinkJiraIssue":
-                context.Response.Write(UpdateJiraIssue(null));
+                context.Response.Write(this.UpdateJiraIssue(null));
                 break;
             case "CreateJiraIssue":
-                dynamic result = CreateJiraIssue();
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", result.key));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                dynamic result = this.CreateJiraIssue();
+                httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("issue/{0}", result.key));
+                context.Response.Write(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "MoveStatus":
-                MoveMsmStatus(context.Request);
+                this.MoveMsmStatus(context.Request);
                 break;
             case "GetProjectsIssueTypes":
-                SortedDictionary<string, string[]> results = GetJIRAProjectIssueTypeMapping();
+                var results = this.GetJiraProjectIssueTypeMapping();
                 context.Response.Write(JsonConvert.SerializeObject(results));
                 break;
             case "GetJiraUsers":
-                httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("user/search?username={0}", this.MSMContactEmail));
-                context.Response.Write(ProcessRequest(httpWebRequest, this.JiraCredentials));
+                httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("user/search?username={0}", this.MsmContactEmail));
+                context.Response.Write(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials));
                 break;
             case "SendAttachments":
-                if (!String.IsNullOrEmpty(AttachmentIds))
+                if (!string.IsNullOrEmpty(this.AttachmentIds))
                 {
-                    int[] attachmentNumIds = Array.ConvertAll<string, int>(AttachmentIds.Split(','), Convert.ToInt32);
-                    List<AttachmentViewInfo> att = GetAttachmentDTOs(attachmentNumIds);
-                    string attachmentResult = PostAttachments(att, JiraIssueNo);
+                    var attachmentNumIds = Array.ConvertAll(this.AttachmentIds.Split(','), Convert.ToInt32);
+                    var att = this.GetAttachmentDtOs(attachmentNumIds);
+                    var attachmentResult = this.PostAttachments(att, this.JiraIssueNo);
                     context.Response.Write(attachmentResult);
                 }
                 break;
             case "ViewSummary":
-                httpWebRequest = BuildRequest(this.IssueUrl);
-                context.Response.Write(this.BuildPreview(ProcessRequest(httpWebRequest, this.JiraCredentials)));
+                httpWebRequest = ApiHandler.BuildRequest(this.IssueUrl);
+                context.Response.Write(this.BuildPreview(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials)));
                 break;
         }
     }
@@ -519,21 +519,22 @@ public class ApiHandler : PluginHandler
     {
         if (string.IsNullOrEmpty(issueString)) return string.Empty;
 
-        var issueDetails = PopulateIssueDetails(issueString);
+        var issueDetails = this.PopulateIssueDetails(issueString);
+        this.PreProcessTemplateResourceStrings(ApiHandler.jiraIssueSummaryTemplate);
 
-        bool isError;
-        string razorTemplate = string.Empty;
-        using (var razor = new MarvalSoftware.RazorHelper())
+        string razorTemplate;
+        using (var razor = new RazorHelper())
         {
-            razorTemplate = razor.Render(jiraIssueSummaryTemplate, issueDetails, out isError);
+            bool isError;
+            razorTemplate = razor.Render(ApiHandler.jiraIssueSummaryTemplate, issueDetails, out isError);
         }
 
         return razorTemplate;
     }
 
-    private Dictionary<String, String> PopulateIssueDetails(String issueString)
+    private Dictionary<string, string> PopulateIssueDetails(string issueString)
     {
-        var issue = JsonHelper.FromJSON(issueString);
+        var issue = JsonHelper.FromJson(issueString);
         var issueDetails = new Dictionary<string, string>();
 
         var issueType = issue.fields["issuetype"];
@@ -543,7 +544,7 @@ public class ApiHandler : PluginHandler
         var project = issue.fields["project"];
         issueDetails.Add("projectIconUrl", Convert.ToString(project.avatarUrls["32x32"]));
         issueDetails.Add("issueUrl", this.BaseUrl + string.Format("browse/{0}", issue.key));
-        issueDetails.Add("summary", System.Web.HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"])));
+        issueDetails.Add("summary", HttpUtility.HtmlEncode(Convert.ToString(issue.fields["summary"])));
         issueDetails.Add("issueProjectAndKey", string.Format("{0} / {1}", project.name, issue.key));
 
         var status = issue.fields["status"];
@@ -559,16 +560,16 @@ public class ApiHandler : PluginHandler
         issueDetails.Add("resolution", resolution != null ? Convert.ToString(resolution.name) : "Unresolved");
 
         var affectedVersions = (JArray)issue.fields["versions"];
-        issueDetails.Add("affectsVersions", affectedVersions.Count() > 0 ? string.Join(",", affectedVersions.Select(av => ((dynamic)av).name)) : "None");
+        issueDetails.Add("affectsVersions", affectedVersions.Any() ? string.Join(",", affectedVersions.Select(av => ((dynamic)av).name)) : "None");
 
         var fixVersions = (JArray)issue.fields["fixVersions"];
-        issueDetails.Add("fixVersions", fixVersions.Count() > 0 ? string.Join(",", fixVersions.Select(fv => ((dynamic)fv).name)) : "None");
+        issueDetails.Add("fixVersions", fixVersions.Any() ? string.Join(",", fixVersions.Select(fv => ((dynamic)fv).name)) : "None");
 
         var components = (JArray)issue.fields["components"];
-        issueDetails.Add("components", components.Count() > 0 ? string.Join(",", components.Select(c => ((dynamic)c).name)) : "None");
+        issueDetails.Add("components", components.Any() ? string.Join(",", components.Select(c => ((dynamic)c).name)) : "None");
 
         var labels = (JArray)issue.fields["labels"];
-        issueDetails.Add("labels", labels.Count() > 0 ? string.Join(",", labels.Select(c => ((dynamic)c).name)) : "None");
+        issueDetails.Add("labels", labels.Any() ? string.Join(",", labels.Select(c => ((dynamic)c).name)) : "None");
         issueDetails.Add("storyPoints", Convert.ToString(issue.fields["aggregatetimeestimate"]));
 
         var assignee = issue.fields["assignee"];
@@ -593,49 +594,46 @@ public class ApiHandler : PluginHandler
             issueDetails["updated"] = ApiHandler.GetRelativeTime(updatedDate);
         }
 
-        issueDetails.Add("description", ApiHandler.ProcessJiraDescription(issue));
+        issueDetails.Add("description", this.ProcessJiraDescription(issue));
         issueDetails.Add("msmLink", string.Empty);
         issueDetails.Add("msmLinkName", string.Empty);
         issueDetails.Add("requestTypeIconUrl", string.Empty);
 
-        if (issue.fields[this.CustomFieldId] != null)
-        {
-            var requestId = Convert.ToString(issue.fields[this.CustomFieldId]);
-            var msmResponse = string.Empty;
+        if (issue.fields[this.CustomFieldId] == null) return issueDetails;
+        var requestId = Convert.ToString(issue.fields[this.CustomFieldId]);
+        var msmResponse = string.Empty;
 
-            try
-            {
-                msmResponse = ApiHandler.ProcessRequest(ApiHandler.BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId)), this.GetEncodedCredentials(this.MSMAPIKey));
-                var requestResponse = JObject.Parse(msmResponse);
-                issueDetails["msmLinkName"] = string.Format("{0}-{1} {2}", requestResponse["entity"]["data"]["type"]["acronym"], requestResponse["entity"]["data"]["number"], requestResponse["entity"]["data"]["description"]);
-                issueDetails["msmLink"] = string.Format("{0}{1}/RFP/Forms/Request.aspx?id={2}", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, requestId);
-                issueDetails["requestTypeIconUrl"] = this.GetRequestBaseTypeIconUrl(Convert.ToInt32(requestResponse["entity"]["data"]["type"]["baseTypeId"]));
-            }
-            catch(Exception ex)
-            {
-                issueDetails["msmLinkName"] = string.Format("An Error occured: {0}, The MSM API Response was: {1}", ex.Message, msmResponse);
-            }
+        try
+        {
+            msmResponse = ApiHandler.ProcessRequest(ApiHandler.BuildRequest(this.MSMBaseUrl + string.Format("/api/serviceDesk/operational/requests/{0}", requestId)), ApiHandler.GetEncodedCredentials(this.MsmApiKey));
+            var requestResponse = JObject.Parse(msmResponse);
+            issueDetails["msmLinkName"] = string.Format("{0}-{1} {2}", requestResponse["entity"]["data"]["type"]["acronym"], requestResponse["entity"]["data"]["number"], requestResponse["entity"]["data"]["description"]);
+            issueDetails["msmLink"] = string.Format("{0}{1}/RFP/Forms/Request.aspx?id={2}", HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority), MarvalSoftware.UI.WebUI.ServiceDesk.WebHelper.ApplicationPath, requestId);
+            issueDetails["requestTypeIconUrl"] = this.GetRequestBaseTypeIconUrl(Convert.ToInt32(requestResponse["entity"]["data"]["type"]["baseTypeId"]));
+        }
+        catch(Exception ex)
+        {
+            issueDetails["msmLinkName"] = string.Format("An Error occured: {0}, The MSM API Response was: {1}", ex.Message, msmResponse);
         }
 
         return issueDetails;
     }
 
-    private static string ProcessJiraDescription(dynamic issue)
+    private string ProcessJiraDescription(dynamic issue)
     {
         var description = Convert.ToString(issue.fields["description"]);
         if (string.IsNullOrEmpty(description)) return description;
 
-        description = WikiNetParser.WikiProvider.ConvertToHtml(description);
+        description = Convert.ToString(this.InvokeCustomPluginStaticTypeMember("WikiNetParser.dll", "WikiNetParser.WikiProvider", "ConvertToHtml", new[] { description }));
         foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(description, "!(.*)!"))
         {
-            if (match.Groups.Count > 1)
+            if (match.Groups.Count <= 1) continue;
+
+            var filename = match.Groups[1].Value;
+            var attachment = (dynamic)((JArray)issue.fields["attachment"]).FirstOrDefault(att => string.Equals(Convert.ToString(((dynamic)att).filename), filename, StringComparison.OrdinalIgnoreCase));
+            if (attachment != null)
             {
-                var filename = match.Groups[1].Value;
-                var attachment = (dynamic)((JArray)issue.fields["attachment"]).FirstOrDefault(att => string.Equals(Convert.ToString(((dynamic)att).filename), filename, StringComparison.OrdinalIgnoreCase));
-                if (attachment != null)
-                {
-                    description = System.Text.RegularExpressions.Regex.Replace(description, match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'/>", Convert.ToString(attachment.content), filename));
-                }
+                description = System.Text.RegularExpressions.Regex.Replace(description, match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'/>", Convert.ToString(attachment.content), filename));
             }
         }
 
@@ -657,19 +655,19 @@ public class ApiHandler : PluginHandler
     /// Retrieves the issue types for each JIRA project.
     /// </summary>
     /// <returns>A sorted dictionary of projects and their issue types.</returns>
-    public SortedDictionary<string, string[]> GetJIRAProjectIssueTypeMapping()
+    public SortedDictionary<string, string[]> GetJiraProjectIssueTypeMapping()
     {
-        HttpWebRequest httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("project"));
-        string response = ProcessRequest(httpWebRequest, this.JiraCredentials);
+        HttpWebRequest httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + "project");
+        var response = ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials);
         JArray projects = JArray.Parse(response);
 
-        SortedDictionary<string, string[]> projectIssueTypes = new SortedDictionary<string, string[]>();
-        List<Task<string>> issueTypeTasks = new List<Task<string>>();
+        var projectIssueTypes = new SortedDictionary<string, string[]>();
+        var issueTypeTasks = new List<Task<string>>();
 
         foreach (JToken project in projects)
         {
             //Start the task
-            Task<string> task = GetProjectIssueTypesAsync(project["key"].ToString());
+            var task = this.GetProjectIssueTypesAsync(project["key"].ToString());
             task.ConfigureAwait(false);
             issueTypeTasks.Add(task);
         }
@@ -677,12 +675,12 @@ public class ApiHandler : PluginHandler
         //Wait for all issue types before sorting
         Task.WaitAll(issueTypeTasks.ToArray());
 
-        foreach (Task<string> task in issueTypeTasks) {
+        foreach (var task in issueTypeTasks) {
             var taskResult = JObject.Parse(task.Result);
             //Filter out subtasks and Epic types and select only the issuetype's name.
             var issueTypes = taskResult["issueTypes"].Where(type => type["subtask"].ToString().Equals("False") && !(type["name"].ToString().Equals("Epic"))).Select(type => type["name"].ToString()).ToArray();
 
-            Array.Sort(issueTypes, (x, y) => String.Compare(x, y));
+            Array.Sort(issueTypes, string.CompareOrdinal);
             projectIssueTypes.Add(taskResult["key"].ToString(), issueTypes);
         }
 
@@ -696,7 +694,7 @@ public class ApiHandler : PluginHandler
     /// <returns>A task which will evantually contain a JSON string.</returns>
     public async Task<string> GetProjectIssueTypesAsync(string projectKey)
     {
-        HttpWebRequest request = BuildRequest(this.ApiBaseUrl + String.Format("project/{0}", projectKey));
+        HttpWebRequest request = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("project/{0}", projectKey));
         request.Headers.Add("Authorization", "Basic " + this.JiraCredentials);
 
         using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
@@ -713,14 +711,9 @@ public class ApiHandler : PluginHandler
     /// </summary>
     /// <param name="attachmentIds"></param>
     /// <returns>A list of attachment DTOs</returns>
-    public List<AttachmentViewInfo> GetAttachmentDTOs(int[] attachmentIds) {
-        List<AttachmentViewInfo> attachments = new List<AttachmentViewInfo>();
+    public List<AttachmentViewInfo> GetAttachmentDtOs(int[] attachmentIds) {
         var attachmentFacade = new RequestManagementFacade();
-        for (int i = 0; i < attachmentIds.Length; i++)
-        {
-            attachments.Add(attachmentFacade.ViewAnAttachment(attachmentIds[i]));
-        }
-        return attachments;
+        return attachmentIds.Select(attachment => attachmentFacade.ViewAnAttachment(attachment)).ToList();
     }
 
     /// <summary>
@@ -750,7 +743,7 @@ public class ApiHandler : PluginHandler
         writer.Flush();
         content.Seek(0, SeekOrigin.Begin);
 
-        HttpWebResponse response = null;
+        HttpWebResponse response;
         HttpWebRequest request = WebRequest.Create(new UriBuilder(this.ApiBaseUrl + "issue/" + issueKey + "/attachments").Uri) as HttpWebRequest;
         request.Method = "POST";
         request.ContentType = string.Format("multipart/form-data; boundary={0}", boundary);
@@ -794,7 +787,8 @@ public class ApiHandler : PluginHandler
                 }
             }
         });
-        jobject.fields[this.CustomFieldId.ToString()] = this.MsmRequestNo;
+
+        jobject.fields[this.CustomFieldId] = this.msmRequestNo;
 
         if (!this.JiraReporter.Equals("null")) {
             dynamic reporter = new JObject();
@@ -802,8 +796,8 @@ public class ApiHandler : PluginHandler
             jobject.fields["reporter"] = reporter;
         }
 
-        var httpWebRequest = BuildRequest(this.ApiBaseUrl + "issue/", jobject.ToString(), "POST");
-        return JObject.Parse(ProcessRequest(httpWebRequest, this.JiraCredentials));
+        var httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + "issue/", jobject.ToString(), "POST");
+        return JObject.Parse(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials));
     }
 
     /// <summary>
@@ -818,8 +812,8 @@ public class ApiHandler : PluginHandler
         result.Add(this.CustomFieldId, value);
         body.Add("fields", result);
 
-        var httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("issue/{0}", JiraIssueNo), JsonHelper.ToJSON(body), "PUT");
-        return ProcessRequest(httpWebRequest, this.JiraCredentials);
+        var httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("issue/{0}", this.JiraIssueNo), JsonHelper.ToJson(body), "PUT");
+        return ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials);
     }
 
     /// <summary>
@@ -830,22 +824,21 @@ public class ApiHandler : PluginHandler
     private void MoveMsmStatus(HttpRequest httpRequest)
     {
         int requestNumber;
-        var isValid = StatusValidation(httpRequest, out requestNumber);
+        var isValid = this.StatusValidation(httpRequest, out requestNumber);
 
-        HttpWebRequest httpWebRequest;
-        httpWebRequest = BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests?number={0}", requestNumber));
-        var requestNumberResponse = JObject.Parse(ProcessRequest(httpWebRequest, GetEncodedCredentials(this.MSMAPIKey)));
+        var httpWebRequest = ApiHandler.BuildRequest(this.MSMBaseUrl + string.Format("/api/serviceDesk/operational/requests?number={0}", requestNumber));
+        var requestNumberResponse = JObject.Parse(ApiHandler.ProcessRequest(httpWebRequest, ApiHandler.GetEncodedCredentials(this.MsmApiKey)));
         var requestId = (int)requestNumberResponse["collection"]["items"].First["entity"]["data"]["id"];
 
-        httpWebRequest = BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}", requestId));
-        var requestIdResponse = JObject.Parse(ProcessRequest(httpWebRequest, GetEncodedCredentials(this.MSMAPIKey)));
+        httpWebRequest = ApiHandler.BuildRequest(this.MSMBaseUrl + string.Format("/api/serviceDesk/operational/requests/{0}", requestId));
+        var requestIdResponse = JObject.Parse(ApiHandler.ProcessRequest(httpWebRequest, ApiHandler.GetEncodedCredentials(this.MsmApiKey)));
         var workflowId = requestIdResponse["entity"]["data"]["requestStatus"]["workflowStatus"]["workflow"]["id"];
 
         if (isValid)
         {
             //Get the next workflow states for the request...
-            httpWebRequest = BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/workflows/{0}/nextStates?requestId={1}&namePredicate=equals({2})", workflowId, requestId, httpRequest.QueryString["status"]));
-            var requestWorkflowResponse = JObject.Parse(ProcessRequest(httpWebRequest, GetEncodedCredentials(this.MSMAPIKey)));
+            httpWebRequest = ApiHandler.BuildRequest(this.MSMBaseUrl + string.Format("/api/serviceDesk/operational/workflows/{0}/nextStates?requestId={1}&namePredicate=equals({2})", workflowId, requestId, httpRequest.QueryString["status"]));
+            var requestWorkflowResponse = JObject.Parse(ApiHandler.ProcessRequest(httpWebRequest, ApiHandler.GetEncodedCredentials(this.MsmApiKey)));
             var workflowResponseItems = (IList<JToken>)requestWorkflowResponse["collection"]["items"];
 
             if (workflowResponseItems.Count > 0)
@@ -855,22 +848,22 @@ public class ApiHandler : PluginHandler
                 msmPutRequest.WorkflowStatusId = workflowResponseItems[0]["entity"]["data"]["id"];
                 msmPutRequest.UpdatedOn = (DateTime)requestNumberResponse["collection"]["items"].First["entity"]["data"]["updatedOn"];
 
-                httpWebRequest = BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}/states", requestId), JsonHelper.ToJSON(msmPutRequest), "POST");
-                string moveStatusResponse = ProcessRequest(httpWebRequest, GetEncodedCredentials(this.MSMAPIKey));
+                httpWebRequest = ApiHandler.BuildRequest(this.MSMBaseUrl + string.Format("/api/serviceDesk/operational/requests/{0}/states", requestId), JsonHelper.ToJson(msmPutRequest), "POST");
+                var moveStatusResponse = ApiHandler.ProcessRequest(httpWebRequest, ApiHandler.GetEncodedCredentials(this.MsmApiKey));
 
                 if (moveStatusResponse.Contains("500"))
                 {
-                    AddMsmNote(requestId, "JIRA status update failed: a server error occured.");
+                    this.AddMsmNote(requestId, "JIRA status update failed: a server error occured.");
                 }
             }
             else
             {
-                AddMsmNote(requestId, "JIRA status update failed: " + httpRequest.QueryString["status"] + " is not a valid next state.");
+                this.AddMsmNote(requestId, "JIRA status update failed: " + httpRequest.QueryString["status"] + " is not a valid next state.");
             }
         }
         else
         {
-            AddMsmNote(requestId, "JIRA status update failed: all linked JIRA issues must be in the same status.");
+            this.AddMsmNote(requestId, "JIRA status update failed: all linked JIRA issues must be in the same status.");
         }
     }
 
@@ -884,40 +877,35 @@ public class ApiHandler : PluginHandler
         body.Add("content", note);
         body.Add("type", "public");
 
-        HttpWebRequest httpWebRequest;
-        httpWebRequest = BuildRequest(this.MSMBaseUrl + String.Format("/api/serviceDesk/operational/requests/{0}/notes/", requestNumber), JsonHelper.ToJSON(body), "POST");
-        ProcessRequest(httpWebRequest, GetEncodedCredentials(this.MSMAPIKey));
+        var httpWebRequest = ApiHandler.BuildRequest(this.MSMBaseUrl + string.Format("/api/serviceDesk/operational/requests/{0}/notes/", requestNumber), JsonHelper.ToJson(body), "POST");
+        ApiHandler.ProcessRequest(httpWebRequest, ApiHandler.GetEncodedCredentials(this.MsmApiKey));
     }
 
     /// <summary>
     /// Validate before moving MSM status
     /// </summary>
     /// <param name="httpRequest">The HttpRequest</param>
+    /// <param name="requestNumber">Out the request number</param>
     /// <returns>Boolean to determine if Valid</returns>
     private bool StatusValidation(HttpRequest httpRequest, out int requestNumber)
     {
-        string json = new StreamReader(httpRequest.InputStream).ReadToEnd();
+        var json = new StreamReader(httpRequest.InputStream).ReadToEnd();
         dynamic data = JObject.Parse(json);
         requestNumber = (int)data.issue.fields[this.CustomFieldId].Value;
 
-        if (requestNumber > 0 && httpRequest.QueryString["status"] != null)
-        {
-            var httpWebRequest = BuildRequest(this.ApiBaseUrl + String.Format("search?jql='{0}'={1}", this.CustomFieldName, requestNumber));
-            dynamic d = JObject.Parse(ProcessRequest(httpWebRequest, this.JiraCredentials));
-            foreach (var issue in d.issues)
-            {
-                if (issue.fields.status.name.Value != data.transition.to_status.Value)
-                {
-                    return false;
-                }
-            }
+        if (requestNumber <= 0 || httpRequest.QueryString["status"] == null) return false;
+        var httpWebRequest = ApiHandler.BuildRequest(this.ApiBaseUrl + string.Format("search?jql='{0}'={1}", this.CustomFieldName, requestNumber));
+        dynamic d = JObject.Parse(ApiHandler.ProcessRequest(httpWebRequest, this.JiraCredentials));
 
-            return true;
-        }
-        else
+        foreach (var issue in d.issues)
         {
-            return false;
+            if (issue.fields.status.name.Value != data.transition.to_status.Value)
+            {
+                return false;
+            }
         }
+
+        return true;
     }
 
     /// <summary>
@@ -966,12 +954,10 @@ public class ApiHandler : PluginHandler
         request.Method = method.ToUpperInvariant();
         request.ContentType = "application/json";
 
-        if (body != null)
+        if (body == null) return request;
+        using (var writer = new StreamWriter(request.GetRequestStream()))
         {
-            using (var writer = new StreamWriter(request.GetRequestStream()))
-            {
-                writer.Write(body);
-            }
+            writer.Write(body);
         }
 
         return request;
@@ -988,7 +974,6 @@ public class ApiHandler : PluginHandler
         try
         {
             request.Headers.Add("Authorization", "Basic " + credentials);
-
             HttpWebResponse response = request.GetResponse() as HttpWebResponse;
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
@@ -1007,9 +992,9 @@ public class ApiHandler : PluginHandler
     /// </summary>
     /// <param name="credentials">The string to encode</param>
     /// <returns>base64 encoded string</returns>
-    private string GetEncodedCredentials(string credentials)
+    private static string GetEncodedCredentials(string credentials)
     {
-        byte[] byteCredentials = Encoding.UTF8.GetBytes(credentials);
+        var byteCredentials = Encoding.UTF8.GetBytes(credentials);
         return Convert.ToBase64String(byteCredentials);
     }
 
@@ -1018,12 +1003,12 @@ public class ApiHandler : PluginHandler
     /// </summary>
     internal class JsonHelper
     {
-        public static string ToJSON(object obj)
+        public static string ToJson(object obj)
         {
             return JsonConvert.SerializeObject(obj);
         }
 
-        public static dynamic FromJSON(string json)
+        public static dynamic FromJson(string json)
         {
             return JObject.Parse(json);
         }
@@ -1033,43 +1018,39 @@ public class ApiHandler : PluginHandler
     {
         var localDateTime = TimezoneHelper.ToLocalTime(date);
         var ts = new TimeSpan(DateTime.UtcNow.Ticks - date.Ticks);
-        double delta = Math.Abs(ts.TotalSeconds);
+        var delta = Math.Abs(ts.TotalSeconds);
         var localTimeOfDay = localDateTime.ToShortTimeString();
-        if (delta < 1 * minute)
+
+        if (delta < 1 * ApiHandler.minute)
         {
             return ts.Seconds == 1 ? "1 second ago" : "A few seconds ago";
         }
 
-        if (delta < 2 * minute)
+        if (delta < 2 * ApiHandler.minute)
         {
             return "1 minute ago";
         }
 
-        if (delta < 45 * minute)
+        if (delta < 45 * ApiHandler.minute)
         {
             return string.Format("{0} minutes ago", ts.Minutes);
         }
 
-        if (delta < 90 * minute)
+        if (delta < 90 * ApiHandler.minute)
         {
             return "1 hour ago";
         }
 
-        if (delta < 24 * hour)
+        if (delta < 24 * ApiHandler.hour)
         {
             return string.Format("{0} hours ago", ts.Hours);
         }
 
-        if (delta < 48 * hour)
+        if (delta < 48 * ApiHandler.hour)
         {
             return string.Format("Yesterday {0}", localTimeOfDay);
         }
 
-        if (delta < 7 * day)
-        {
-            return string.Format("{0} {1}", localDateTime.DayOfWeek, localTimeOfDay);
-        }
-
-        return localDateTime.ToString();
+        return delta < 7 * ApiHandler.day ? string.Format("{0} {1}", localDateTime.DayOfWeek, localTimeOfDay) : localDateTime.ToString(CultureInfo.InvariantCulture);
     }
 }

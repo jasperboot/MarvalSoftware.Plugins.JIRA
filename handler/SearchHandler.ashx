@@ -5,43 +5,21 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
-using System.Dynamic;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MarvalSoftware.UI.WebUI.ServiceDesk.RFP.Plugins;
-using MarvalSoftware.ServiceDesk.Facade;
-using MarvalSoftware.DataTransferObjects;
-using System.Threading.Tasks;
-using System.Linq;
 
 /// <summary>
 /// ApiHandler
 /// </summary>
 public class SearchHandler : PluginHandler
 {
-    //properties
-    private string CustomFieldName
-    {
-        get
-        {
-            return GlobalSettings["@@JIRACustomFieldName"];
-        }
-    }
-
-    private string CustomFieldId
-    {
-        get
-        {
-            return GlobalSettings["@@JIRACustomFieldID"];
-        }
-    }
-
     private string BaseUrl
     {
         get
         {
-            return GlobalSettings["@@JIRABaseUrl"];
+            return this.GlobalSettings["@@JIRABaseUrl"];
         }
     }
 
@@ -57,7 +35,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRAUsername"];
+            return this.GlobalSettings["@@JIRAUsername"];
         }
     }
 
@@ -65,7 +43,7 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GlobalSettings["@@JIRAPassword"];
+            return this.GlobalSettings["@@JIRAPassword"];
         }
     }
 
@@ -73,12 +51,11 @@ public class SearchHandler : PluginHandler
     {
         get
         {
-            return GetEncodedCredentials(String.Format("{0}:{1}", this.Username, this.Password));
+            return SearchHandler.GetEncodedCredentials(string.Format("{0}:{1}", this.Username, this.Password));
         }
     }
 
     private string SearchText { get; set; }
-
     private int MaximumNumberOfResults { get; set; }
 
     /// <summary>
@@ -87,7 +64,7 @@ public class SearchHandler : PluginHandler
     public override void HandleRequest(HttpContext context)
     {
         this.ProcessParamaters(context.Request);
-        var httpWebRequest = this.BuildRequest(this.ApiBaseUrl + String.Format("search?jql=issue={0}", this.SearchText));
+        var httpWebRequest = SearchHandler.BuildRequest(this.ApiBaseUrl + string.Format("search?jql=issue={0}", this.SearchText));
         context.Response.Write(this.ProcessRequest(httpWebRequest, this.JiraCredentials));
     }
 
@@ -101,7 +78,7 @@ public class SearchHandler : PluginHandler
     /// </summary>
     private void ProcessParamaters(HttpRequest httpRequest)
     {
-        this.SearchText = System.Web.HttpUtility.UrlDecode(httpRequest.Params["searchText"]) ?? string.Empty;
+        this.SearchText = HttpUtility.UrlDecode(httpRequest.Params["searchText"]) ?? string.Empty;
         int maxResults;
         int.TryParse(httpRequest.Params["maxResults"] ?? string.Empty, out maxResults);
         this.MaximumNumberOfResults = maxResults;
@@ -114,18 +91,16 @@ public class SearchHandler : PluginHandler
     /// <param name="body">The body for the request</param>
     /// <param name="method">The verb for the request</param>
     /// <returns>The HttpWebRequest ready to be processed</returns>
-    private HttpWebRequest BuildRequest(string uri = null, string body = null, string method = "GET")
+    private static HttpWebRequest BuildRequest(string uri = null, string body = null, string method = "GET")
     {
         var request = WebRequest.Create(new UriBuilder(uri).Uri) as HttpWebRequest;
         request.Method = method.ToUpperInvariant();
         request.ContentType = "application/json";
 
-        if (body != null)
+        if (body == null) return request;
+        using (var writer = new StreamWriter(request.GetRequestStream()))
         {
-            using (var writer = new StreamWriter(request.GetRequestStream()))
-            {
-                writer.Write(body);
-            }
+            writer.Write(body);
         }
 
         return request;
@@ -148,7 +123,7 @@ public class SearchHandler : PluginHandler
             HttpWebResponse response = request.GetResponse() as HttpWebResponse;
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
-                var searchResponse = JsonHelper.FromJSON(reader.ReadToEnd());
+                var searchResponse = JsonHelper.FromJson(reader.ReadToEnd());
                 var foundIssues = (JArray)searchResponse.issues;
 
                 foreach (dynamic issue in foundIssues)
@@ -160,7 +135,7 @@ public class SearchHandler : PluginHandler
                     {
                         Url = this.BaseUrl + string.Format("browse/{0}", issue.key),
                         Text = string.Format("{0} {1}", issue.key, issueSummary),
-                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueUrl={1}", this.PluginBaseUrl, System.Web.HttpUtility.UrlEncode(Convert.ToString(issue.self))),
+                        PreviewUrl = string.Format("{0}handler/ApiHandler.ashx?action=ViewSummary&issueUrl={1}", this.PluginBaseUrl, HttpUtility.UrlEncode(Convert.ToString(issue.self))),
                         ExternalIconUrl = Convert.ToString(issueType.iconUrl)
                     });
                 }
@@ -168,18 +143,15 @@ public class SearchHandler : PluginHandler
         }
         catch (WebException ex)
         {
-            if (ex.Response != null)
+            if (ex.Response == null) return ex.Message;
+            using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
             {
-                using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
-                {
-                    return reader.ReadToEnd();
-                }
+                return reader.ReadToEnd();
             }
 
-            return ex.Message;
         }
 
-        return JsonHelper.ToJSON(issueList);
+        return JsonHelper.ToJson(issueList);
     }
 
     /// <summary>
@@ -187,9 +159,9 @@ public class SearchHandler : PluginHandler
     /// </summary>
     /// <param name="credentials">The string to encode</param>
     /// <returns>base64 encoded string</returns>
-    private string GetEncodedCredentials(string credentials)
+    private static string GetEncodedCredentials(string credentials)
     {
-        byte[] byteCredentials = Encoding.UTF8.GetBytes(credentials);
+        var byteCredentials = Encoding.UTF8.GetBytes(credentials);
         return Convert.ToBase64String(byteCredentials);
     }
 
@@ -198,12 +170,12 @@ public class SearchHandler : PluginHandler
     /// </summary>
     internal class JsonHelper
     {
-        public static string ToJSON(object obj)
+        public static string ToJson(object obj)
         {
             return JsonConvert.SerializeObject(obj);
         }
 
-        public static dynamic FromJSON(string json)
+        public static dynamic FromJson(string json)
         {
             return JObject.Parse(json);
         }

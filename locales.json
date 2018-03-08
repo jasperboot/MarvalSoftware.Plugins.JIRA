@@ -30,7 +30,24 @@
 					"EnsureConfigurationSettingsCorrect.": "Ensure all configuration settings are correct.",
 					"SelectRequestAttachmentHeader": "Select Request Attachment(s):",
 					"SelectAllOption": "Select All",
-					"SelectNoneOption": "Select None"
+					"SelectNoneOption": "Select None",
+          "Details" : "Details",
+          "Type": "Type",
+					"Status": "Status",
+				  "Priority": "Priority",
+          "Resolution": "Resolution",
+          "AffectsVersion": "Affects Version/s",
+          "FixVersion" : "Fix Version/s",
+          "Component" : "Component/s",
+          "Label" : "Label/s",
+          "StoryPoints" : "Story Points",
+          "People" : "People",
+          "Assignee": "Assignee",
+          "Reporter" : "Reporter",
+          "Dates" : "Dates",
+					"Created" : "Created",
+          "Updated" : "Updated",
+          "Description": "Description" 
 			}
 		}]	
 }
