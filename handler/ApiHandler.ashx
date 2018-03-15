@@ -613,7 +613,7 @@ public class ApiHandler : PluginHandler
         }
         catch(Exception ex)
         {
-            issueDetails["msmLinkName"] = string.Format("An Error occured: {0}, The MSM API Response was: {1}", ex.Message, msmResponse);
+            issueDetails["msmLinkName"] = null;
         }
 
         return issueDetails;
