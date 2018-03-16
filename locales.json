@@ -11,7 +11,7 @@
 					"JIRAUsername": "JIRA Username",
 					"JIRAPassword": "JIRA Password",
 					"MSMAPIKey": "MSM API Key",
-					"JiraIssue": "Jira Issue",
+					"JiraIssue": "Jira Issue(s)",
 					"AttachmentCheckBox" : "attachment",
 					"SelectedAttachments": "Attachments ({0} selected)",
 					"AttachmentPopUpTitle": "New Jira Issue",
