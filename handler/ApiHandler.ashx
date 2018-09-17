@@ -270,7 +270,7 @@ public class ApiHandler : PluginHandler
 
         var labels = (JArray)issue.fields["labels"];
         issueDetails.Add("labels", labels.Any() ? string.Join(",", labels.Select(c => ((dynamic)c).name)) : "None");
-        issueDetails.Add("storyPoints", Convert.ToString(issue.fields["aggregatetimeestimate"]));
+        issueDetails.Add("storyPoints", Convert.ToString(issue.fields["customfield_10006"]));
 
         var assignee = issue.fields["assignee"];
         issueDetails.Add("assigneeName", assignee != null ? Convert.ToString(assignee.displayName) : "Unassigned");
@@ -284,14 +284,14 @@ public class ApiHandler : PluginHandler
         issueDetails.Add("created", string.Empty);
         if (DateTime.TryParse(Convert.ToString(issue.fields["created"]), out createdDate))
         {
-            issueDetails["created"] = ApiHandler.GetRelativeTime(createdDate);
+            issueDetails["created"] = this.GetRelativeTime(createdDate);
         }
 
         DateTime updatedDate;
         issueDetails.Add("updated", string.Empty);
         if (DateTime.TryParse(Convert.ToString(issue.fields["updated"]), out updatedDate))
         {
-            issueDetails["updated"] = ApiHandler.GetRelativeTime(updatedDate);
+            issueDetails["updated"] = this.GetRelativeTime(updatedDate);
         }
 
         issueDetails.Add("description", this.ProcessJiraDescription(issue));
@@ -714,43 +714,47 @@ public class ApiHandler : PluginHandler
         }
     }
 
-    private static string GetRelativeTime(DateTime date)
+    private string GetRelativeTime(DateTime date)
     {
-        var localDateTime = TimezoneHelper.ToLocalTime(date);
-        var ts = new TimeSpan(DateTime.UtcNow.Ticks - date.Ticks);
+        var ts = new TimeSpan(DateTime.Now.Ticks - date.Ticks);
         var delta = Math.Abs(ts.TotalSeconds);
-        var localTimeOfDay = localDateTime.ToShortTimeString();
+        var localTimeOfDay = date.ToShortTimeString();
 
         if (delta < 1 * ApiHandler.minute)
         {
-            return ts.Seconds == 1 ? "1 second ago" : "A few seconds ago";
+            return ts.Seconds == 1 ? this.GetResourceString("@@OneSecondAgo") : this.GetResourceString("@@AFewSecondsAgo");
         }
 
         if (delta < 2 * ApiHandler.minute)
         {
-            return "1 minute ago";
+            return this.GetResourceString("@@OneMinuteAgo");
         }
 
-        if (delta < 45 * ApiHandler.minute)
+        if (delta < 60 * ApiHandler.minute)
         {
-            return string.Format("{0} minutes ago", ts.Minutes);
+            return this.GetResourceString("@@MinutesAgo", Math.Floor(ts.TotalMinutes));
         }
 
-        if (delta < 90 * ApiHandler.minute)
+        if (delta < 61 * ApiHandler.minute)
         {
-            return "1 hour ago";
+            return this.GetResourceString("@@OneHourAgo");
         }
 
         if (delta < 24 * ApiHandler.hour)
         {
-            return string.Format("{0} hours ago", ts.Hours);
+            return this.GetResourceString("@@HoursAgo", Math.Floor(ts.TotalHours));
         }
 
         if (delta < 48 * ApiHandler.hour)
         {
-            return string.Format("Yesterday {0}", localTimeOfDay);
+            return this.GetResourceString("@@YesterdayAt", localTimeOfDay);
+        }
+        
+        if (delta < 7 * ApiHandler.day)
+        {
+            return this.GetResourceString("@@DaysAgo", Math.Floor(ts.TotalDays));
         }
 
-        return delta < 7 * ApiHandler.day ? string.Format("{0} {1}", localDateTime.DayOfWeek, localTimeOfDay) : localDateTime.ToString(CultureInfo.InvariantCulture);
+        return date.ToString("dd/MMM/yy hh:mm tt");
     }
 }

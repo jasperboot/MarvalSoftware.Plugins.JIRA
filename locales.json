@@ -47,7 +47,15 @@
           "Dates" : "Dates",
 					"Created" : "Created",
           "Updated" : "Updated",
-          "Description": "Description" 
+          "Description": "Description",
+					"OneSecondAgo" :  "1 second ago",
+					"AFewSecondsAgo" :  "A few seconds ago",
+          "OneMinuteAgo" : "1 minute ago",
+          "MinutesAgo" :  "{0} minutes ago",
+          "OneHourAgo" :  "1 hour ago",
+					"HoursAgo" :  "{0} hours ago",
+          "YesterdayAt" :  "Yesterday at {0}",
+          "DaysAgo" :  "{0} days ago"
 			}
 		}]	
 }
