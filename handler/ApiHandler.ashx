@@ -269,7 +269,7 @@ public class ApiHandler : PluginHandler
         issueDetails.Add("components", components.Any() ? string.Join(",", components.Select(c => ((dynamic)c).name)) : "None");
 
         var labels = (JArray)issue.fields["labels"];
-        issueDetails.Add("labels", labels.Any() ? string.Join(",", labels.Select(c => ((dynamic)c).name)) : "None");
+        issueDetails.Add("labels", labels.Any() ? string.Join(",", labels.Select(c => ((dynamic)c).Value)) : "None");
         issueDetails.Add("storyPoints", Convert.ToString(issue.fields["customfield_10006"]));
 
         var assignee = issue.fields["assignee"];
@@ -325,15 +325,23 @@ public class ApiHandler : PluginHandler
         if (string.IsNullOrEmpty(description)) return description;
 
         description = Convert.ToString(this.InvokeCustomPluginStaticTypeMember("WikiNetParser.dll", "WikiNetParser.WikiProvider", "ConvertToHtml", new[] { description }));
-        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(description, "!(.*)!"))
+        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(description, @"!(.*)!"))
         {
             if (match.Groups.Count <= 1) continue;
 
             var filename = match.Groups[1].Value;
+            var dimension = string.Empty;
+            var dimensionMatch = System.Text.RegularExpressions.Regex.Match(filename, @"(.*)\|width=([0-9]*),height=([0-9]*)");
+            if (dimensionMatch.Success && dimensionMatch.Groups.Count > 2)
+            {
+                filename = dimensionMatch.Groups[1].Value;
+                dimension = string.Format(" width='{0}' height='{1}' ", dimensionMatch.Groups[2].Value, dimensionMatch.Groups[3].Value);
+            }
+
             var attachment = (dynamic)((JArray)issue.fields["attachment"]).FirstOrDefault(att => string.Equals(Convert.ToString(((dynamic)att).filename), filename, StringComparison.OrdinalIgnoreCase));
             if (attachment != null)
             {
-                description = System.Text.RegularExpressions.Regex.Replace(description, match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'/>", Convert.ToString(attachment.content), filename));
+                description = System.Text.RegularExpressions.Regex.Replace(description, match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'{0}/>", Convert.ToString(attachment.content), filename, dimension));
             }
         }
 
