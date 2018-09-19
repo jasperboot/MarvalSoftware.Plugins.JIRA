@@ -341,7 +341,7 @@ public class ApiHandler : PluginHandler
             var attachment = (dynamic)((JArray)issue.fields["attachment"]).FirstOrDefault(att => string.Equals(Convert.ToString(((dynamic)att).filename), filename, StringComparison.OrdinalIgnoreCase));
             if (attachment != null)
             {
-                description = description.Replace(match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'{0}/>", Convert.ToString(attachment.content), filename, dimension));
+                description = description.Replace(match.Groups[0].Value, string.Format("<img src='{0}' title='{1}'{2}/>", Convert.ToString(attachment.content), filename, dimension));
             }
         }
 
