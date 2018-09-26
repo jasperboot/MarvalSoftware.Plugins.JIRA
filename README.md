@@ -41,6 +41,7 @@ if the status is not valid a note will be added to the request.
 | 2.0.0   | 14.4.0      | v7+      |
 | 2.0.1   | 14.5.0      | v7+      |
 | 3.0.0   | 14.9.0      | v7+      |
+| 3.0.1   | 14.13.0     | v7+      |
 
 ## Installation
 
