@@ -5,6 +5,7 @@
   "Icon": "img/jira_16.png",
   "Version": "3.0.1",
   "SupportedVersions": [
+	"14.13.0", 
 	"14.12.0",
 	"14.11.0",
 	"14.10.4",
