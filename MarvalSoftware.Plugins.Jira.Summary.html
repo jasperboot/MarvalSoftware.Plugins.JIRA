@@ -1,0 +1,314 @@
+﻿<html xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+    <style>
+        html {
+            font-family: Arial;
+            font-size: 12px;
+        }
+
+        #container {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 29px;
+            overflow: auto;
+            height: 449px;
+        }
+
+        @@media print {
+            #container {
+                overflow: visible;
+            }
+        }
+
+        .content {
+            padding-bottom: 19px;
+        }
+
+        .jiraIssueHeader {
+            padding-left: 42px;
+            background: no-repeat 0 center;
+            background-image: url(@string.Format("'{0}'", Model["projectIconUrl"]));
+            vertical-align: middle;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 20px;
+            margin: 0;
+            padding: 0;
+            padding-top: 5px;
+        }
+
+        h2 a {
+            text-decoration: none;
+        }
+
+        h2 .notLink:hover {
+            color: #000;
+            cursor: text;
+        }
+
+        .panel {
+            clear: both;
+        }
+
+            .panel > h2 {
+                margin-bottom: 10px;
+                border-bottom: 2px solid #d5d5d5;
+                font-size: 16px;
+            }
+
+        .panel {
+            margin-top: 10px;
+        }
+
+            .panel:first-child {
+                margin-top: 0;
+            }
+
+            .panel .multiColumn {
+                -moz-column-count: 2;
+                -webkit-column-count: 2;
+                column-count: 2;
+                -webkit-column-width: 350px;
+                -moz-column-width: 350px;
+                column-width: 350px;
+            }
+
+            .panel .keyValueSpan {
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+                .panel .keyValueSpan + .keyValueSpan,
+                .panel .keyValueSpan + .multiColumn,
+                .panel .multiColumn + .keyValueSpan,
+                .panel .keyValueSpan + .grid,
+                .panel .keyValueDiv + .keyValueDiv,
+                .panel .keyValueDiv + .multiColumn,
+                .panel .multiColumn + .keyValueDiv,
+                .panel .keyValueDiv + .grid {
+                    margin-top: 10px;
+                }
+
+                .panel .keyValueSpan,
+                .panel .keyValueSpan > * {
+                    vertical-align: middle;
+                }
+
+                    .panel .keyValueSpan > label,
+                    .panel .keyValueDiv > label {
+                        display: inline-block;
+                        width: 100px;
+                        text-align: center;
+                        margin-right: 10px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+            .panel .keyValueDiv > div {
+                margin-left: 110px;
+                margin-top: -1em;
+            }
+
+            .panel .keyValueSpan > span,
+            .panel .keyValueSpan > a,
+            .panel .keyValueDiv > div {
+                font-weight: bold;
+            }
+
+            .panel .keyValueSpan .jiraType {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url(@string.Format("'{0}'", Model["issueTypeIconUrl"]));
+            }
+
+            .panel .keyValueSpan .jiraStatus {
+                background-color: @Model["statusCategoryBackgroundColor"];
+                border-color: @Model["statusCategoryBackgroundColor"];
+                padding: 2px;
+            }
+
+            .panel .keyValueSpan .jiraPriority {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-size: 16 16;
+                background-image: url(@string.Format("'{0}'", Model["priorityIconUrl"]));
+            }
+
+            .panel .keyValueSpan .jiraAssignee {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url(@string.Format("'{0}'", Model["assigneeIconUrl"]));
+            }
+
+            .panel .keyValueSpan .jiraReporter {
+                padding-left: 18px;
+                background: no-repeat 0 center;
+                background-image: url(@string.Format("'{0}'", Model["reporterIconUrl"]));
+            }
+
+        .footer {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-top: 1px solid #000;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 49px;
+            vertical-align: middle;
+            padding-left: 30px;
+            line-height: 30px;
+        }
+
+            .footer > h2 {
+                margin: 0;
+                margin-top: 5px;
+                padding-top: 5px;
+                padding-left: 42px;
+                background: no-repeat 0 center;
+                background-image: url(@string.Format("'{0}'", Model["requestTypeIconUrl"]));
+                font-size: 16px;
+            }
+
+        a {
+            color: #000;
+            text-decoration: underline;
+        }
+
+            a:hover {
+                color: #F00;
+            }
+    </style>
+</head>
+<body id='body'>
+    <div id='container' class='container'>
+        <div id='content' class='content'>
+            <div class='jiraIssueHeader'>
+                <a href=@string.Format("'{0}'", Model["issueUrl"])
+                   target='_blank'>@Model["issueProjectAndKey"]</a>
+                <h1 id='heading'
+                    title=@string.Format("\"{0}\"", Model["summary"])>
+                    @Model["summary"]
+                </h1>
+            </div>
+            <div class='jiraSummary'>
+                <div id='details' class='panel'>
+                    <h2>@@Details</h2>
+                    <div class='multiColumn'>
+                        <span class='keyValueSpan'>
+                            <label>@@Type</label>
+                            <span class='jiraType'>@Model["issueTypeName"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@Status</label>
+                            <span class='jiraStatus'>@Model["statusName"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@Priority</label>
+                            <span class='jiraPriority'>@Model["priorityName"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@Resolution</label>
+                            <span>@Model["resolution"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@AffectsVersion</label>
+                            <span>@Model["affectsVersions"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@FixVersion</label>
+                            <span>@Model["fixVersions"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@Component</label>
+                            <span>@Model["components"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@Label</label>
+                            <span>@Model["labels"]</span>
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@StoryPoints</label>
+                            <span>@Model["storyPoints"]</span>
+                        </span>
+                    </div>
+                </div>
+                <div id='People' class='panel'>
+                    <h2>@@People</h2>
+                    <div class='multiColumn'>
+                        <span class='keyValueSpan'>
+                            <label>@@Assignee</label>
+                            @if(!string.IsNullOrEmpty(Model["assigneeName"]))
+                            {
+                            <span class='jiraAssignee'>
+                                @Model["assigneeName"]
+                            </span>
+                            }
+                            else
+                            {
+                            <span>@Model["assigneeName"]</span>
+                            }
+                        </span>
+                        <span class='keyValueSpan'>
+                            <label>@@Reporter</label>
+                            @if(!string.IsNullOrEmpty(Model["reporterName"]))
+                            {
+                            <span class='jiraReporter'>
+                                @Model["reporterName"]
+                            </span>
+                            }
+                            else
+                            {
+                            <span>@Model["reporterName"]</span>
+                            }
+                        </span>
+                    </div>
+                </div>
+                <div id='Dates' class='panel'>
+                    <h2>@@Dates</h2>
+                    <span class='keyValueSpan'>
+                        <label>@@Created</label>
+                        <span>@Model["created"]</span>
+                    </span>
+                    <span class='keyValueSpan'>
+                        <label>@@Updated</label>
+                        <span>@Model["updated"]</span>
+                    </span>
+                </div>
+                <div id='Description' class='panel'>
+                    <h2>@@Description</h2>
+                    <span>@Model["description"]</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='footer'>
+        @if(!string.IsNullOrEmpty(Model["msmLink"]))
+        {
+        <h2>
+            <a href=@string.Format("'{0}'", Model["msmLink"])
+               target='_blank'
+               title=@string.Format("\"{0}\"", Model["msmLinkName"])>@Model["msmLinkName"]</a>
+        </h2>
+        }
+        @if(string.IsNullOrEmpty(Model["msmLink"]) && !string.IsNullOrEmpty(Model["msmLinkName"]))
+        {
+        <h2 title=@string.Format("\"{0}\"", Model["msmLinkName"])>
+            @Model["msmLinkName"]
+        </h2>
+        }
+    </div>
+</body>
+</html>
